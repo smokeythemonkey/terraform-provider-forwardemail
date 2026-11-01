@@ -59,3 +59,4 @@ website/node_modules
 terraform-provider-forwardemail
 
 .task
+docs/plan
