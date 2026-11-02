@@ -1,10 +1,17 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"log"
 
 	"github.com/forwardemail/terraform-provider-forwardemail/forwardemail"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+)
+
+var (
+	version = "dev"
+	commit  = "none"
 )
 
 func main() {
@@ -13,11 +20,13 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
 
-	opts := &plugin.ServeOpts{
-		Debug:        debug,
-		ProviderAddr: "search.opentofu.org/provider/forwardemail/forwardemail",
-		ProviderFunc: forwardemail.Provider,
+	opts := providerserver.ServeOpts{
+		Debug:   debug,
+		Address: "search.opentofu.org/provider/forwardemail/forwardemail",
 	}
 
-	plugin.Serve(opts)
+	err := providerserver.Serve(context.Background(), forwardemail.New(version), opts)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 }
