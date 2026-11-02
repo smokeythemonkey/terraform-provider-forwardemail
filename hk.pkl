@@ -1,0 +1,14 @@
+amends "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Builtins.pkl"
+// Using a coding agent? See https://hk.jdx.dev/agents
+
+local linters = new Mapping {
+    ["actionlint"] = Builtins.actionlint
+    ["go_fmt"] = Builtins.go_fmt
+    ["golangci_lint"] = Builtins.golangci_lint
+    ["golangci_lint_fmt"] = Builtins.golangci_lint_fmt
+    ["gomod_tidy"] = Builtins.gomod_tidy
+    ["zizmor"] = Builtins.zizmor
+}
+
+steps = linters

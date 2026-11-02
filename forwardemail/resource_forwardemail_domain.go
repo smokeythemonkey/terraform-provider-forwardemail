@@ -56,7 +56,7 @@ func resourceDomain() *schema.Resource {
 	}
 }
 
-func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, ok := meta.(*forwardemail.Client)
 	if !ok {
 		return diag.Errorf("could not get forwardemail client")
@@ -77,7 +77,7 @@ func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	for k, v := range map[string]interface{}{
+	for k, v := range map[string]any{
 		"adult_content_protection": domain.HasAdultContentProtection,
 		"phishing_protection":      domain.HasPhishingProtection,
 		"executable_protection":    domain.HasExecutableProtection,
@@ -94,7 +94,7 @@ func resourceDomainCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	return nil
 }
 
-func resourceDomainRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, ok := meta.(*forwardemail.Client)
 	if !ok {
 		return diag.Errorf("could not get forwardemail client")
@@ -107,7 +107,7 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.FromErr(err)
 	}
 
-	for k, v := range map[string]interface{}{
+	for k, v := range map[string]any{
 		"adult_content_protection": domain.HasAdultContentProtection,
 		"phishing_protection":      domain.HasPhishingProtection,
 		"executable_protection":    domain.HasExecutableProtection,
@@ -122,7 +122,7 @@ func resourceDomainRead(ctx context.Context, d *schema.ResourceData, meta interf
 	return nil
 }
 
-func resourceDomainUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, ok := meta.(*forwardemail.Client)
 	if !ok {
 		return diag.Errorf("could not get forwardemail client")
@@ -145,7 +145,7 @@ func resourceDomainUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	return nil
 }
 
-func resourceDomainDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDomainDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, ok := meta.(*forwardemail.Client)
 	if !ok {
 		return diag.Errorf("could not get forwardemail client")
@@ -162,7 +162,7 @@ func resourceDomainDelete(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 // toBool returns a pointer to the bool value passed in.
-func toBool(v interface{}) *bool {
+func toBool(v any) *bool {
 	if b, ok := v.(bool); ok {
 		return &b
 	}
@@ -170,7 +170,7 @@ func toBool(v interface{}) *bool {
 	return nil
 }
 
-func toChange(p, c interface{}) interface{} {
+func toChange(p, c any) any {
 	if cmp.Equal(p, c) {
 		return nil
 	}

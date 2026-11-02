@@ -64,7 +64,7 @@ func resourceAlias() *schema.Resource {
 	}
 }
 
-func resourceAliasCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceAliasCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, ok := meta.(*forwardemail.Client)
 	if !ok {
 		return diag.Errorf("meta is not of type *forwardemail.Client")
@@ -76,8 +76,8 @@ func resourceAliasCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	params := forwardemail.AliasParameters{
 		HasRecipientVerification: toBool(d.Get("recipient_verification")),
 		IsEnabled:                toBool(d.Get("enabled")),
-		Recipients:               toSliceOfStrings(toChanges(nil, d.Get("recipients"))),
-		Labels:                   toSliceOfStrings(toChanges(nil, d.Get("labels"))),
+		Recipients:               toSliceOfStrings(toChanges(d.Get("recipients"))),
+		Labels:                   toSliceOfStrings(toChanges(d.Get("labels"))),
 		Description:              d.Get("description").(string),
 	}
 
@@ -86,7 +86,7 @@ func resourceAliasCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	for k, v := range map[string]interface{}{
+	for k, v := range map[string]any{
 		"domain":                 alias.Domain.Name,
 		"recipient_verification": alias.HasRecipientVerification,
 		"enabled":                alias.IsEnabled,
@@ -104,7 +104,7 @@ func resourceAliasCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	return nil
 }
 
-func resourceAliasRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceAliasRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, ok := meta.(*forwardemail.Client)
 	if !ok {
 		return diag.Errorf("meta is not of type *forwardemail.Client")
@@ -118,7 +118,7 @@ func resourceAliasRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.FromErr(err)
 	}
 
-	for k, v := range map[string]interface{}{
+	for k, v := range map[string]any{
 		"domain":                 alias.Domain.Name,
 		"recipient_verification": alias.HasRecipientVerification,
 		"enabled":                alias.IsEnabled,
@@ -134,7 +134,7 @@ func resourceAliasRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	return nil
 }
 
-func resourceAliasUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceAliasUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, ok := meta.(*forwardemail.Client)
 	if !ok {
 		return diag.Errorf("meta is not of type *forwardemail.Client")
@@ -148,8 +148,8 @@ func resourceAliasUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	params := forwardemail.AliasParameters{}
 	params.HasRecipientVerification = toBool(toChange(nil, d.Get("recipient_verification")))
 	params.IsEnabled = toBool(toChange(nil, d.Get("enabled")))
-	params.Recipients = toSliceOfStrings(toChanges(nil, d.Get("recipients")))
-	params.Labels = toSliceOfStrings(toChanges(nil, d.Get("labels")))
+	params.Recipients = toSliceOfStrings(toChanges(d.Get("recipients")))
+	params.Labels = toSliceOfStrings(toChanges(d.Get("labels")))
 
 	_, err := client.UpdateAlias(domain, name, params)
 	if err != nil {
@@ -159,7 +159,7 @@ func resourceAliasUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	return nil
 }
 
-func resourceAliasDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceAliasDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, ok := meta.(*forwardemail.Client)
 	if !ok {
 		return diag.Errorf("meta is not of type *forwardemail.Client")
@@ -177,7 +177,7 @@ func resourceAliasDelete(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 // toSliceOfStrings converts slice of interfaces into pointer to slice of strings.
-func toSliceOfStrings(vs []interface{}) *[]string {
+func toSliceOfStrings(vs []any) *[]string {
 	var stringSlice []string
 	for _, v := range vs {
 		if str, ok := v.(string); ok {
@@ -189,13 +189,13 @@ func toSliceOfStrings(vs []interface{}) *[]string {
 }
 
 // toChanges converts interface into slice of interfaces.
-func toChanges(p, c interface{}) []interface{} {
-	if cmp.Equal(p, c) {
+// ToChanges converts interface into slice of interfaces.
+func toChanges(c any) []any {
+	if cmp.Equal(nil, c) {
 		return nil
 	}
 
-	switch v := c.(type) {
-	case []interface{}:
+	if v, ok := c.([]any); ok {
 		return v
 	}
 
