@@ -4,62 +4,100 @@ import (
 	"context"
 
 	"github.com/forwardemail/forwardemail-api-go/forwardemail"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func dataSourceAccount() *schema.Resource {
-	return &schema.Resource{
-		Description: "A data source to get current account properties.",
-		Schema: map[string]*schema.Schema{
-			"plan": {
-				Type:        schema.TypeString,
+var (
+	_ datasource.DataSource              = &accountDataSource{}
+	_ datasource.DataSourceWithConfigure = &accountDataSource{}
+)
+
+func NewAccountDataSource() datasource.DataSource {
+	return &accountDataSource{}
+}
+
+type accountDataSource struct {
+	client *forwardemail.Client
+}
+
+type AccountModel struct {
+	Id          types.String `tfsdk:"id"`
+	Plan        types.String `tfsdk:"plan"`
+	Email       types.String `tfsdk:"email"`
+	FullEmail   types.String `tfsdk:"full_email"`
+	DisplayName types.String `tfsdk:"display_name"`
+}
+
+func (accountSource *accountDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_account"
+}
+
+func (accountSource *accountDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		Description: "A forwardemail datasource that represents the account properties",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:    true,
+				Description: "Account ID.",
+			},
+			"plan": schema.StringAttribute{
 				Computed:    true,
 				Description: "Plan type.",
 			},
-			"email": {
-				Type:        schema.TypeString,
+			"email": schema.StringAttribute{
 				Computed:    true,
 				Description: "Email address.",
 			},
-			"full_email": {
-				Type:        schema.TypeString,
+			"full_email": schema.StringAttribute{
 				Computed:    true,
 				Description: "Full email address.",
 			},
-			"display_name": {
-				Type:        schema.TypeString,
+			"display_name": schema.StringAttribute{
 				Computed:    true,
 				Description: "Display name.",
 			},
 		},
-		ReadContext: dataSourceAccountRead,
 	}
 }
 
-func dataSourceAccountRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	client, ok := meta.(*forwardemail.Client)
+func (accountSource *accountDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*forwardemail.Client)
 	if !ok {
-		return diag.Errorf("failed to get forwardemail client")
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			"Expected *forwardemail.Client, got something else. "+
+				"Please report this issue to the provider maintainers",
+		)
+		return
+	}
+	accountSource.client = client
+}
+
+func (accountSource *accountDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data AccountModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	account, err := client.GetAccount()
+	account, err := accountSource.client.GetAccount()
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.AddError("Failed to get account", err.Error())
+		return
 	}
 
-	for k, v := range map[string]any{
-		"plan":         account.Plan,
-		"email":        account.Email,
-		"full_email":   account.FullEmail,
-		"display_name": account.DisplayName,
-	} {
-		if err := d.Set(k, v); err != nil {
-			return diag.FromErr(err)
-		}
-	}
+	data.Id = types.StringValue(account.Id)
+	data.Plan = types.StringValue(account.Plan)
+	data.Email = types.StringValue(account.Email)
+	data.FullEmail = types.StringValue(account.FullEmail)
+	data.DisplayName = types.StringValue(account.DisplayName)
 
-	d.SetId(account.Id)
-
-	return nil
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

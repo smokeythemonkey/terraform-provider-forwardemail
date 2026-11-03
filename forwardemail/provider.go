@@ -14,36 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// func Provider() *schema.Provider {
-// 	return &schema.Provider{
-// 		Schema: map[string]*schema.Schema{
-// 			"api_key": {
-// 				Type:        schema.TypeString,
-// 				Description: "The API key for Forward Email management",
-// 				Required:    true,
-// 				DefaultFunc: schema.EnvDefaultFunc("FORWARDEMAIL_API_KEY", nil),
-// 				Sensitive:   true,
-// 			},
-// 		},
-// 		ResourcesMap: map[string]*schema.Resource{
-// 			"forwardemail_domain": resourceDomain(),
-// 			"forwardemail_alias":  resourceAlias(),
-// 		},
-// 		DataSourcesMap: map[string]*schema.Resource{
-// 			"forwardemail_account": dataSourceAccount(),
-// 		},
-// 		ConfigureContextFunc: providerConfigure,
-// 	}
-// }
-//
-// func providerConfigure(c context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
-// 	client := forwardemail.NewClient(forwardemail.ClientOptions{
-// 		ApiKey: d.Get("api_key").(string),
-// 	})
-//
-// 	return client, diag.Diagnostics{}
-// }
-
 type forwardemailProvider struct {
 	version string
 }
@@ -98,5 +68,7 @@ func (p *forwardemailProvider) Resources(_ context.Context) []func() resource.Re
 }
 
 func (p *forwardemailProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewAccountDataSource,
+	}
 }
