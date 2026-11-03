@@ -64,7 +64,9 @@ func (p *forwardemailProvider) Configure(ctx context.Context, req provider.Confi
 }
 
 func (p *forwardemailProvider) Resources(_ context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewDomainResource,
+	}
 }
 
 func (p *forwardemailProvider) DataSources(_ context.Context) []func() datasource.DataSource {

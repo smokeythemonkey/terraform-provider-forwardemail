@@ -14,12 +14,12 @@ var (
 	_ datasource.DataSourceWithConfigure = &accountDataSource{}
 )
 
-func NewAccountDataSource() datasource.DataSource {
-	return &accountDataSource{}
-}
-
 type accountDataSource struct {
 	client *forwardemail.Client
+}
+
+func NewAccountDataSource() datasource.DataSource {
+	return &accountDataSource{}
 }
 
 type AccountModel struct {
