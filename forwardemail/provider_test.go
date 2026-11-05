@@ -6,26 +6,17 @@ import (
 	"testing"
 
 	"github.com/forwardemail/forwardemail-api-go/forwardemail"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	tfprotov6 "github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-// testAccProviderFactories returns factories for the SDKv2 provider to be used
-// with terraform-plugin-testing.
-func testAccProviderFactories() map[string]func() (*schema.Provider, error) {
-	return map[string]func() (*schema.Provider, error){
-		"forwardemail": func() (*schema.Provider, error) { return Provider(), nil },
+// testAccProtoV6ProviderFactories attaches the framework provider to
+// terraform-plugin-testing over protocol version 6.
+func testAccProtoV6ProviderFactories() map[string]func() (tfprotov6.ProviderServer, error) {
+	return map[string]func() (tfprotov6.ProviderServer, error){
+		"forwardemail": providerserver.NewProtocol6WithError(New("test")()),
 	}
-}
-
-func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-}
-
-func TestProvider_impl(t *testing.T) {
-	_ = Provider()
 }
 
 func testAccPreCheck(t *testing.T) {
@@ -60,6 +51,8 @@ func TestAccTests(t *testing.T) {
 
 var TestCases = map[string]func(*testing.T) resource.TestCase{
 	"account_data": testAccDataSourceForwardemailAccount,
+	"domain":       testAccDomainResource,
+	"alias":        testAccAliasResource,
 }
 
 // testAccGetEnv is a small indirection to allow tests to stub environment access if needed.

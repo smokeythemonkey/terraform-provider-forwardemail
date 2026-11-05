@@ -9,10 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
 
-var (
-	version = "dev"
-	commit  = "none"
-)
+var version = "dev"
 
 func main() {
 	var debug bool
@@ -22,7 +19,7 @@ func main() {
 
 	opts := providerserver.ServeOpts{
 		Debug:   debug,
-		Address: "search.opentofu.org/provider/forwardemail/forwardemail",
+		Address: "registry.terraform.io/forwardemail/forwardemail",
 	}
 
 	err := providerserver.Serve(context.Background(), forwardemail.New(version), opts)

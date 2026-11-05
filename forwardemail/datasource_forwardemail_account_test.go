@@ -8,8 +8,8 @@ import (
 
 func testAccDataSourceForwardemailAccount(t *testing.T) resource.TestCase {
 	return resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories(),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccAccountDataSourceConfig(),

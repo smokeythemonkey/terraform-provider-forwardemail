@@ -6,10 +6,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccResourceForwardemailAlias(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories(),
+func testAccAliasResource(t *testing.T) resource.TestCase {
+	return resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccAliasResourceConfig(),
@@ -20,7 +20,7 @@ func TestAccResourceForwardemailAlias(t *testing.T) {
 				),
 			},
 		},
-	})
+	}
 }
 
 func testAccAliasResourceConfig() string {

@@ -8,6 +8,7 @@ go = "1.27.3"
 "go:github.com/goreleaser/goreleaser/v2" = "v2.19.0"
 hk = "2.8.1"
 pkl = "0.32.2"
+terraform = "1.17.1"
 
 [env]
 HK_MISE = "1"
@@ -36,7 +37,12 @@ run = [
   "cd tools; go generate ./...",
   "sed -i.bak 's/forwardemail Provider/Forward Email Provider/g' docs/index.md && rm docs/index.md.bak",
 ]
-sources = ["forwardemail/**/*.go", "main.go", "examples/**/*.tf", "examples/**/*.sh"]
+sources = [
+  "forwardemail/**/*.go",
+  "main.go",
+  "examples/**/*.tf",
+  "examples/**/*.sh",
+]
 outputs = ["docs/**/*.md"]
 
 [tasks.fmt]
