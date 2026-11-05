@@ -3,12 +3,12 @@
 page_title: "forwardemail_account Data Source - forwardemail"
 subcategory: ""
 description: |-
-  A data source to get current account properties.
+  A forwardemail datasource that represents the account properties
 ---
 
 # forwardemail_account (Data Source)
 
-A data source to get current account properties.
+A forwardemail datasource that represents the account properties
 
 
 
@@ -20,5 +20,5 @@ A data source to get current account properties.
 - `display_name` (String) Display name.
 - `email` (String) Email address.
 - `full_email` (String) Full email address.
-- `id` (String) The ID of this resource.
+- `id` (String) Account ID.
 - `plan` (String) Plan type.

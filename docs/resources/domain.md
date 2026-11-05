@@ -29,4 +29,4 @@ A resource to create Forward Email domains.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) Domain name (the ID is the same as the name).
