@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/forwardemail/forwardemail-api-go/forwardemail"
-	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -218,8 +217,4 @@ func (domainResource *domainResource) Delete(ctx context.Context, req resource.D
 		resp.Diagnostics.AddError("Failed to delete Domain", err.Error())
 		return
 	}
-}
-
-func changed[T any](plan, state T) bool {
-	return !cmp.Equal(plan, state)
 }
