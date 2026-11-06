@@ -1,6 +1,7 @@
 package sweep
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -22,7 +23,7 @@ func SweepDomains(name string) *resource.Sweeper {
 			}
 
 			// Get all domains
-			domains, err := client.GetDomains()
+			domains, err := client.GetDomains(context.Background())
 			if err != nil {
 				return fmt.Errorf("error getting domains: %w", err)
 			}
@@ -31,7 +32,7 @@ func SweepDomains(name string) *resource.Sweeper {
 			for _, domain := range domains {
 				if strings.HasPrefix(domain.Name, prefix) {
 					log.Printf("[INFO] Deleting domain: %s", domain.Name)
-					err := client.DeleteDomain(domain.Name)
+					err := client.DeleteDomain(context.Background(), domain.Name)
 					if err != nil {
 						log.Printf("[ERROR] Failed to delete domain %s: %s", domain.Name, err)
 					}

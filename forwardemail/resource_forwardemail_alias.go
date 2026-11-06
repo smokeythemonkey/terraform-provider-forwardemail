@@ -117,9 +117,6 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	domain := plan.Domain.ValueString()
-	aliasName := plan.Name.ValueString()
-
 	var recipients, labels []string
 	resp.Diagnostics.Append(plan.Recipient.ElementsAs(ctx, &recipients, false)...)
 	resp.Diagnostics.Append(plan.Labels.ElementsAs(ctx, &labels, false)...)
@@ -135,16 +132,15 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 		Description:              plan.Description.ValueString(),
 	}
 
-	alias, err := aliasResource.client.CreateAlias(domain, aliasName, params)
+	alias, err := aliasResource.client.CreateAlias(ctx, plan.Domain.ValueString(), plan.Name.ValueString(), params)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create alias", err.Error())
 		return
 	}
 
-	// N.B.: the SDKv2 provider stored the alias *name* as the ID, even
-	// though the API returns its own alias ID. Keep that for state parity.
-	plan.Id = types.StringValue(aliasName)
+	plan.Id = types.StringValue(alias.ID)
 	plan.Domain = types.StringValue(alias.Domain.Name)
+	plan.Name = types.StringValue(alias.Name)
 	plan.Enabled = types.BoolValue(alias.IsEnabled)
 	plan.RecipientVerification = types.BoolValue(alias.HasRecipientVerification)
 	plan.Description = types.StringValue(alias.Description)
@@ -172,10 +168,7 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	domain := state.Domain.ValueString()
-	aliasName := state.Name.ValueString()
-
-	alias, err := aliasResource.client.GetAlias(domain, aliasName)
+	alias, err := aliasResource.client.GetAlias(ctx, state.Domain.ValueString(), state.Name.ValueString())
 	if err != nil {
 		// The client returns a plain error embedding the status code
 		// ("status: %d, body: %s"); there is no typed APIError in this
@@ -188,8 +181,9 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	state.Id = types.StringValue(aliasName)
+	state.Id = types.StringValue(alias.ID)
 	state.Domain = types.StringValue(alias.Domain.Name)
+	state.Name = types.StringValue(alias.Name)
 	state.Enabled = types.BoolValue(alias.IsEnabled)
 	state.RecipientVerification = types.BoolValue(alias.HasRecipientVerification)
 	state.Description = types.StringValue(alias.Description)
@@ -232,7 +226,7 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 		Description:              plan.Description.ValueString(),
 	}
 
-	_, err := aliasResource.client.UpdateAlias(state.Domain.ValueString(), state.Id.ValueString(), params)
+	_, err := aliasResource.client.UpdateAlias(ctx, state.Domain.ValueString(), state.Name.ValueString(), params)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to update alias", err.Error())
 		return
@@ -249,10 +243,7 @@ func (aliasResource *aliasResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
-	domain := state.Domain.ValueString()
-	aliasName := state.Id.ValueString()
-
-	err := aliasResource.client.DeleteAlias(domain, aliasName)
+	err := aliasResource.client.DeleteAlias(ctx, state.Domain.ValueString(), state.Name.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to delete alias", err.Error())
 		return

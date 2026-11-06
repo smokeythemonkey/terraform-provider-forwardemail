@@ -2,8 +2,9 @@ package forwardemail
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strings"
+	"net/http"
 
 	"github.com/forwardemail/forwardemail-api-go/forwardemail"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -117,13 +118,13 @@ func (domainResource *domainResource) Create(ctx context.Context, req resource.C
 		HasRecipientVerification:  plan.RecipientVerification.ValueBoolPointer(),
 	}
 
-	domain, err := domainResource.client.CreateDomain(plan.Name.ValueString(), params)
+	domain, err := domainResource.client.CreateDomain(ctx, plan.Name.ValueString(), params)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create domain", err.Error())
 		return
 	}
 
-	plan.Id = types.StringValue(domain.Id)
+	plan.Id = types.StringValue(domain.ID)
 	plan.Name = types.StringValue(domain.Name)
 	plan.AdultContentProtection = types.BoolValue(domain.HasAdultContentProtection)
 	plan.PhishingProtection = types.BoolValue(domain.HasPhishingProtection)
@@ -136,19 +137,16 @@ func (domainResource *domainResource) Create(ctx context.Context, req resource.C
 
 func (domainResource *domainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state DomainModel
+	var apiErr *forwardemail.APIError
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	name := state.Id.ValueString()
-	domain, err := domainResource.client.GetDomain(name)
+	domain, err := domainResource.client.GetDomain(ctx, state.Id.ValueString())
 	if err != nil {
-		// The client returns a plain error embedding the status code
-		// ("status: %d, body: %s"); there is no typed APIError in this
-		// version, so match the string.
-		if strings.Contains(err.Error(), "status: 404") {
+		if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -156,7 +154,7 @@ func (domainResource *domainResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	state.Id = types.StringValue(domain.Id)
+	state.Id = types.StringValue(domain.ID)
 	state.Name = types.StringValue(domain.Name)
 	state.AdultContentProtection = types.BoolValue(domain.HasAdultContentProtection)
 	state.PhishingProtection = types.BoolValue(domain.HasPhishingProtection)
@@ -194,7 +192,7 @@ func (domainResource *domainResource) Update(ctx context.Context, req resource.U
 		params.HasRecipientVerification = plan.RecipientVerification.ValueBoolPointer()
 	}
 
-	_, err := domainResource.client.UpdateDomain(state.Id.ValueString(), params)
+	_, err := domainResource.client.UpdateDomain(ctx, state.Id.ValueString(), params)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to update domain", err.Error())
 		return
@@ -212,7 +210,7 @@ func (domainResource *domainResource) Delete(ctx context.Context, req resource.D
 	}
 
 	name := state.Id.ValueString()
-	err := domainResource.client.DeleteDomain(name)
+	err := domainResource.client.DeleteDomain(ctx, name)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to delete Domain", err.Error())
 		return

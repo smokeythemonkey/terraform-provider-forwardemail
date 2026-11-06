@@ -58,7 +58,13 @@ func (p *forwardemailProvider) Configure(ctx context.Context, req provider.Confi
 		return
 	}
 
-	client := forwardemail.NewClient(forwardemail.ClientOptions{ApiKey: apiKey.ValueString()})
+	client, err := forwardemail.NewClient(apiKey.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Failed to create Forward Email client", err.Error(),
+		)
+		return
+	}
 	resp.ResourceData = client
 	resp.DataSourceData = client
 }
@@ -66,6 +72,7 @@ func (p *forwardemailProvider) Configure(ctx context.Context, req provider.Confi
 func (p *forwardemailProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewDomainResource,
+		NewAliasResource,
 	}
 }
 

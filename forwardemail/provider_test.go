@@ -1,6 +1,7 @@
 package forwardemail
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -31,8 +32,11 @@ func testAccPreCheck(t *testing.T) {
 		t.Skip("FORWARDEMAIL_API_KEY must be set for acceptance tests")
 	}
 	// Probe account to detect plan restrictions early and skip gracefully.
-	client := forwardemail.NewClient(forwardemail.ClientOptions{ApiKey: apiKey})
-	if _, err := client.GetAccount(); err != nil {
+	client, err := forwardemail.NewClient(apiKey)
+	if err != nil {
+		t.Fatalf("precheck failed creating forward email client: %v", err)
+	}
+	if _, err := client.GetAccount(context.Background()); err != nil {
 		if strings.Contains(err.Error(), "status: 402") || strings.Contains(err.Error(), "Payment Required") {
 			t.Skip("Acceptance tests skipped: Forward Email plan does not permit this operation (402 Payment Required)")
 		}

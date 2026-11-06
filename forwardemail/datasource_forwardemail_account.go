@@ -87,13 +87,13 @@ func (accountSource *accountDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
-	account, err := accountSource.client.GetAccount()
+	account, err := accountSource.client.GetAccount(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to get account", err.Error())
 		return
 	}
 
-	data.Id = types.StringValue(account.Id)
+	data.Id = types.StringValue(account.ID)
 	data.Plan = types.StringValue(account.Plan)
 	data.Email = types.StringValue(account.Email)
 	data.FullEmail = types.StringValue(account.FullEmail)

@@ -4,6 +4,7 @@ package sweep
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 
@@ -22,9 +23,12 @@ func ConfigureSweeperClient(name string) (*forwardemail.Client, error) {
 	}
 
 	// Initialize the client
-	client := forwardemail.NewClient(
-		forwardemail.ClientOptions{ApiKey: apiKey},
+	client, err := forwardemail.NewClient(
+		apiKey,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Forward Email client: %w", err)
+	}
 
 	return client, nil
 }
