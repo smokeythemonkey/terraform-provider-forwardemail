@@ -19,7 +19,7 @@ func main() {
 
 	opts := providerserver.ServeOpts{
 		Debug:   debug,
-		Address: "registry.terraform.io/forwardemail/forwardemail",
+		Address: "registry.terraform.io/smokeythemonkey/forwardemail",
 	}
 
 	err := providerserver.Serve(context.Background(), forwardemail.New(version), opts)

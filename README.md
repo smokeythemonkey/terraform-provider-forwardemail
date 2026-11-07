@@ -8,36 +8,42 @@
 
 # Terraform Forward Email Provider
 
-The [Forward Email Provider]([https://registry.terraform.io/providers/](https://registry.terraform.io/providers/forwardemail/forwardemail/latest)) enables [Terraform](https://terraform.io) to manage [Forward Email](https://forwardemail.net/) resources.
+The [Forward Email Provider](https://registry.terraform.io/providers/smokeythemonkey/forwardemail/latest) enables [Terraform](https://terraform.io) to manage [Forward Email](https://forwardemail.net/) resources.
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) >= 0.12
-- [Go](https://golang.org/doc/install) >= 1.13 (to build the provider plugin)
+- [Terraform](https://www.terraform.io/downloads.html) >= 1.0 (protocol 6; OpenTofu works too)
+- [Go](https://golang.org/doc/install) >= 1.25 (to build the provider plugin)
+- [mise](https://mise.jdx.dev/) (build toolchain; installs Go, Terraform, goreleaser, and linters per `mise.toml`)
 
 ## Building the Provider
-
-> [!NOTE]
-> The following installation uses [Taskfile](https://taskfile.dev/), which can be downloaded by running the following command:
->
-> `brew install go-task`
 
 Clone repository:
 
 ```sh
-git clone https://github.com/forwardemail/terraform-provider-forwardemail.git
+git clone https://github.com/smokeythemonkey/terraform-provider-forwardemail.git
 ```
 
 Enter the provider directory and build the provider:
 
 ```sh
-cd terraform-provider-armis-forwardemail
-task build
+cd terraform-provider-forwardemail
+mise run build
 ```
 
 To use a released provider in your Terraform environment, run [`terraform init`](https://www.terraform.io/docs/commands/init.html) and Terraform will automatically install the provider. To specify a particular provider version when installing released providers, see the [Terraform documentation on provider versioning](https://www.terraform.io/docs/configuration/providers.html#version-provider-versions).
 
 To instead use a custom-built provider in your Terraform environment (e.g. the provider binary from the build instructions above), follow the instructions to [install it as a plugin.](https://www.terraform.io/docs/plugins/basics.html#installing-plugins) After placing the custom-built provider into your plugins directory, run `terraform init` to initialize it.
+
+## Releasing
+
+Releases are built, signed, and published by [goreleaser](https://goreleaser.com/) through mise, so the exact same commands run locally and in CI:
+
+- `mise run release-check` — validate the `.goreleaser.yaml` configuration
+- `mise run release-dry` — build the release artifacts locally without publishing
+- `mise run release` — build, sign, and publish a release for the current tag
+
+See [RELEASE.md](RELEASE.md) for the full release and registry-publishing walkthrough, including the required GPG key and GitHub secrets.
 
 ## Examples
 
@@ -46,9 +52,9 @@ terraform {
   required_version = ">= 1.0.0"
 
   required_providers {
-    spacelift = {
-      source  = "forwardemail/forwardemail"
-      version = ">= 1.0"
+    forwardemail = {
+      source  = "smokeythemonkey/forwardemail"
+      version = ">= 0.1"
     }
   }
 }
@@ -64,7 +70,7 @@ resource "forwardemail_domain" "default" {
 
 ## Contributing
 
-For bug reports & feature requests, please use the [issue tracker](https://github.com/forwardemail/terraform-provider-forwardemail/issues).
+For bug reports & feature requests, please use the [issue tracker](https://github.com/smokeythemonkey/terraform-provider-forwardemail/issues).
 
 PRs are welcome! We follow the typical "fork-and-pull" Git workflow.
  1. **Fork** the repo on GitHub
@@ -78,7 +84,7 @@ PRs are welcome! We follow the typical "fork-and-pull" Git workflow.
 
 ### Many Thanks to Our Contributors
 
-<a href="https://github.com/forwardemail/terraform-provider-forwardemail/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=forwardemail/terraform-provider-forwardemail&max=24" />
+<a href="https://github.com/smokeythemonkey/terraform-provider-forwardemail/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=smokeythemonkey/terraform-provider-forwardemail&max=24" />
 </a>
 
