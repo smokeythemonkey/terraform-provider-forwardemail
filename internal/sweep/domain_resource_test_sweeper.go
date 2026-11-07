@@ -2,6 +2,7 @@ package sweep
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -16,6 +17,11 @@ func SweepDomains(name string) *resource.Sweeper {
 		F: func(_ string) error {
 			client, err := ConfigureSweeperClient(name)
 			if err != nil {
+				// No API key means there is nothing to sweep, not a
+				// failure: keyless runs (e.g. fork PRs in CI) skip.
+				if errors.Is(err, errNoAPIKey) {
+					return nil
+				}
 				return fmt.Errorf("error configuring Forward Email client: %w", err)
 			}
 			if client == nil {
