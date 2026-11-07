@@ -12,3 +12,13 @@ local linters = new Mapping {
 }
 
 steps = linters
+
+hooks {
+    ["pre-push"] {
+        steps {
+            ["acceptance-tests"] {
+                check = "mise run test"
+            }
+        }
+    }
+}
