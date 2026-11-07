@@ -2,7 +2,7 @@ terraform {
   required_version = ">= 1.0.0"
 
   required_providers {
-    spacelift = {
+    forwardemail = {
       source  = "forwardemail/forwardemail"
       version = ">= 1.0"
     }

@@ -30,3 +30,14 @@ A resource to create Forward Email domains.
 ### Read-Only
 
 - `id` (String) Domain name (the ID is the same as the name).
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+#!/usr/bin/env bash
+
+# The import ID is the domain name.
+terraform import forwardemail_domain.example example.com
+```

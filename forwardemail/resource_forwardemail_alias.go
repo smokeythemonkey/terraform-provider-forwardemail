@@ -2,11 +2,14 @@ package forwardemail
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/forwardemail/forwardemail-api-go/forwardemail"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -15,8 +18,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &aliasResource{}
-	_ resource.ResourceWithConfigure = &aliasResource{}
+	_ resource.Resource                = &aliasResource{}
+	_ resource.ResourceWithConfigure   = &aliasResource{}
+	_ resource.ResourceWithImportState = &aliasResource{}
 )
 
 type aliasResource struct {
@@ -138,7 +142,10 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	plan.Id = types.StringValue(alias.ID)
+	// The API returns an opaque ID in alias.ID, but every client call is
+	// keyed by the (domain, name) pair, so the name is the resource's
+	// Terraform ID.
+	plan.Id = types.StringValue(alias.Name)
 	plan.Domain = types.StringValue(alias.Domain.Name)
 	plan.Name = types.StringValue(alias.Name)
 	plan.Enabled = types.BoolValue(alias.IsEnabled)
@@ -170,10 +177,8 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 
 	alias, err := aliasResource.client.GetAlias(ctx, state.Domain.ValueString(), state.Name.ValueString())
 	if err != nil {
-		// The client returns a plain error embedding the status code
-		// ("status: %d, body: %s"); there is no typed APIError in this
-		// version, so match the string.
-		if strings.Contains(err.Error(), "status: 404") {
+		var apiErr *forwardemail.APIError
+		if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -181,7 +186,7 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	state.Id = types.StringValue(alias.ID)
+	state.Id = types.StringValue(alias.Name)
 	state.Domain = types.StringValue(alias.Domain.Name)
 	state.Name = types.StringValue(alias.Name)
 	state.Enabled = types.BoolValue(alias.IsEnabled)
@@ -248,4 +253,17 @@ func (aliasResource *aliasResource) Delete(ctx context.Context, req resource.Del
 		resp.Diagnostics.AddError("Failed to delete alias", err.Error())
 		return
 	}
+}
+
+// ImportState accepts an import ID of "domain/name" because an alias is
+// identified by that pair in the API. Read then fills every other attribute.
+func (aliasResource *aliasResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	idParts := strings.SplitN(req.ID, "/", 2)
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+		resp.Diagnostics.AddError("Invalid import ID", fmt.Sprintf("Expected 'domain/name', got: %q.", req.ID))
+		return
+	}
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("domain"), idParts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), idParts[1])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), idParts[1])...)
 }

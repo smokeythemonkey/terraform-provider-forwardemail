@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/forwardemail/forwardemail-api-go/forwardemail"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -14,8 +15,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &domainResource{}
-	_ resource.ResourceWithConfigure = &domainResource{}
+	_ resource.Resource                = &domainResource{}
+	_ resource.ResourceWithConfigure   = &domainResource{}
+	_ resource.ResourceWithImportState = &domainResource{}
 )
 
 type domainResource struct {
@@ -124,7 +126,7 @@ func (domainResource *domainResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	plan.Id = types.StringValue(domain.ID)
+	plan.Id = types.StringValue(domain.Name)
 	plan.Name = types.StringValue(domain.Name)
 	plan.AdultContentProtection = types.BoolValue(domain.HasAdultContentProtection)
 	plan.PhishingProtection = types.BoolValue(domain.HasPhishingProtection)
@@ -154,7 +156,9 @@ func (domainResource *domainResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	state.Id = types.StringValue(domain.ID)
+	// The API returns an opaque ID in domain.ID, but every client call is
+	// keyed by the domain name, so the name is the resource's Terraform ID.
+	state.Id = types.StringValue(domain.Name)
 	state.Name = types.StringValue(domain.Name)
 	state.AdultContentProtection = types.BoolValue(domain.HasAdultContentProtection)
 	state.PhishingProtection = types.BoolValue(domain.HasPhishingProtection)
@@ -215,4 +219,10 @@ func (domainResource *domainResource) Delete(ctx context.Context, req resource.D
 		resp.Diagnostics.AddError("Failed to delete Domain", err.Error())
 		return
 	}
+}
+
+// ImportState accepts the domain name as the import ID. Read then fills
+// every other attribute from the API.
+func (domainResource *domainResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
