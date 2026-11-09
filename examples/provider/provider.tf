@@ -3,8 +3,8 @@ terraform {
 
   required_providers {
     forwardemail = {
-      source  = "forwardemail/forwardemail"
-      version = ">= 1.0"
+      source  = "smokeythemonkey/forwardemail"
+      version = ">= 0.1"
     }
   }
 }

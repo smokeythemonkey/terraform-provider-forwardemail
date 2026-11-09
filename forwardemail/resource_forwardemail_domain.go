@@ -196,11 +196,21 @@ func (domainResource *domainResource) Update(ctx context.Context, req resource.U
 		params.HasRecipientVerification = plan.RecipientVerification.ValueBoolPointer()
 	}
 
-	_, err := domainResource.client.UpdateDomain(ctx, state.Id.ValueString(), params)
+	domain, err := domainResource.client.UpdateDomain(ctx, state.Id.ValueString(), params)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to update domain", err.Error())
 		return
 	}
+
+	// Computed attributes (id) are unknown in the plan during update, so
+	// every value must be set from the API response before saving state.
+	plan.Id = types.StringValue(domain.Name)
+	plan.Name = types.StringValue(domain.Name)
+	plan.AdultContentProtection = types.BoolValue(domain.HasAdultContentProtection)
+	plan.PhishingProtection = types.BoolValue(domain.HasPhishingProtection)
+	plan.ExecutableProtection = types.BoolValue(domain.HasExecutableProtection)
+	plan.VirusProtection = types.BoolValue(domain.HasVirusProtection)
+	plan.RecipientVerification = types.BoolValue(domain.HasRecipientVerification)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }

@@ -60,3 +60,6 @@ terraform-provider-forwardemail
 
 .task
 docs/plan
+
+# fnox personal secret overrides
+fnox.local.toml

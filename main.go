@@ -5,8 +5,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/forwardemail/terraform-provider-forwardemail/forwardemail"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/smokeythemonkey/terraform-provider-forwardemail/forwardemail"
 )
 
 var version = "dev"
@@ -19,7 +19,7 @@ func main() {
 
 	opts := providerserver.ServeOpts{
 		Debug:   debug,
-		Address: "registry.terraform.io/forwardemail/forwardemail",
+		Address: "registry.terraform.io/smokeythemonkey/forwardemail",
 	}
 
 	err := providerserver.Serve(context.Background(), forwardemail.New(version), opts)

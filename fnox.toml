@@ -1,0 +1,9 @@
+#:schema https://fnox.jdx.dev/schema.json
+
+# Declares the secret names this project's tasks need. Values are resolved
+# from your environment (FORWARDEMAIL_API_KEY=... in your shell), or from
+# your personal fnox.local.toml — see CONTRIBUTING.md.
+if_missing = "warn"
+
+[secrets]
+FORWARDEMAIL_API_KEY = {}
