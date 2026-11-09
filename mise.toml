@@ -20,110 +20,13 @@ HK_MISE = "1"
 [hooks]
 postinstall = "hk install --mise"
 
-[tasks.build]
-description = "Build the provider binary"
-run = "go build -v ./..."
-sources = ["**/*.go", "go.mod", "go.sum"]
-outputs = ["terraform-provider-forwardemail"]
-
-[tasks.test]
-description = "Run acceptance tests against the provider (API key from Bitwarden Secrets Manager)"
-env = { TF_ACC = "true" }
-run = """
-go mod tidy
-fnox exec -- go test ./forwardemail/... -v -timeout=30m
-mise run sweep
-"""
-
-[tasks.docs]
-description = "Update the docs generated from description fields"
-run = [
-  "cd tools; go generate ./...",
-  "sed -i.bak 's/forwardemail Provider/Forward Email Provider/g' docs/index.md && rm docs/index.md.bak",
-]
-sources = [
-  "forwardemail/**/*.go",
-  "main.go",
-  "examples/**/*.tf",
-  "examples/**/*.sh",
-]
-outputs = ["docs/**/*.md"]
-
 [tasks.fmt]
 description = "Run gofmt against the provider"
 run = "gofmt -s -w -r 'interface{} -> any' ."
 
-[tasks.lint]
-description = "Run linters against the provider"
-run = """
-golangci-lint run
-BADFMT=$(gofmt -s -l -r 'interface{} -> any' .)
-test -z "$BADFMT" || (echo -e "Invalid gofmt:\\n$BADFMT"; exit 1)
-go vet ./...
-"""
-
-[tasks.release-check]
-description = "Validate the goreleaser release configuration"
-run = "goreleaser check"
-
-[tasks.release-dry]
-description = "Build the release artifacts locally without publishing or signing"
-run = "goreleaser release --snapshot --clean --skip=sign"
-
-[tasks.release-tag]
-description = "Prompt for a version tag, create it, and push it to trigger the release workflow"
-run = """
-set -e
-printf 'Release tag (v-prefixed semver, e.g. v0.1.0): '
-read -r TAG
-if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\\.[0-9]+\\.[0-9]+$'; then
-  echo "error: tag '$TAG' must be a v-prefixed semantic version" >&2
-  exit 1
-fi
-if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-  echo "error: tag '$TAG' already exists" >&2
-  exit 1
-fi
-if git show-ref --verify --quiet "refs/heads/$TAG" 2>/dev/null; then
-  echo "error: a branch named '$TAG' exists; tags and branches may not share a name" >&2
-  exit 1
-fi
-git tag -a "$TAG" -m "$TAG"
-git push origin --follow-tags
-"""
-
-[tasks.release]
-description = "Build, sign, and publish a release for the current tag (requires GITHUB_TOKEN and a GPG key)"
-run = "goreleaser release --clean"
-
-[tasks.install]
-description = "Set up an override allowing a local version of the provider to be used"
-run = """
-BIN_DIR=$(go env GOBIN)
-[ -n "$BIN_DIR" ] || BIN_DIR=$(go env GOPATH)/bin
-cat <<EOF > "$HOME/.terraformrc"
-provider_installation {
-  dev_overrides {
-    "smokeythemonkey/forwardemail" = "$BIN_DIR"
-  }
-  direct {}
-}
-EOF
-go install .
-"""
-
-[tasks.uninstall]
-description = "Remove any local overrides for local development"
-run = 'rm -f "$HOME/.terraformrc"'
-
 [tasks.sweep]
 description = "Run sweeper tests to clean up resources. WARNING: This will destroy resources! Use with caution."
 run = "fnox exec -- go test ./forwardemail -v -timeout 5m -sweep=forwardemail"
-
-[tasks.prep]
-description = "Prepare the provider"
-depends = ["fmt", "lint", "docs", "install"]
-run = "go mod tidy"
 
 [tasks.pre-commit]
 run = "hk run pre-commit"

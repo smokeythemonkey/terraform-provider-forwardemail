@@ -41,7 +41,7 @@ Enter the provider directory and build the provider:
 
 ```sh
 cd terraform-provider-forwardemail
-mise run build
+mise run ci:build
 ```
 
 To use a released provider in your Terraform environment, run [`terraform init`](https://www.terraform.io/docs/commands/init.html) and Terraform will automatically install the provider. To specify a particular provider version when installing released providers, see the [Terraform documentation on provider versioning](https://www.terraform.io/docs/configuration/providers.html#version-provider-versions).
@@ -50,11 +50,12 @@ To instead use a custom-built provider in your Terraform environment (e.g. the p
 
 ## Releasing
 
-Releases are built, signed, and published by [goreleaser](https://goreleaser.com/) through mise, so the exact same commands run locally and in CI:
+Releases are built, signed, and published by [goreleaser](https://goreleaser.com/) through mise:
 
-- `mise run release-check` — validate the `.goreleaser.yaml` configuration
-- `mise run release-dry` — build the release artifacts locally without publishing
-- `mise run release` — build, sign, and publish a release for the current tag
+- `mise run release:check` — validate the `.goreleaser.yaml` configuration
+- `mise run release:dry` — build the release artifacts locally without publishing
+- `mise run release:tag v0.1.0` — tag a release and push it to trigger the CI release workflow
+- `mise run ci:release` — CI-only: build, sign, and publish a release for the current tag
 
 ## Examples
 

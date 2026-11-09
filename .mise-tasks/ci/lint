@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Run linters against the provider"
+set -euo pipefail
+
+golangci-lint run
+BADFMT=$(gofmt -s -l -r 'interface{} -> any' .)
+test -z "$BADFMT" || (echo -e "Invalid gofmt:\n$BADFMT"; exit 1)
+go vet ./...

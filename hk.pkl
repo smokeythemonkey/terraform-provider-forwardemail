@@ -17,7 +17,7 @@ hooks {
     ["pre-push"] {
         steps {
             ["acceptance-tests"] {
-                check = "mise run test"
+                check = "mise run ci:test"
             }
         }
     }

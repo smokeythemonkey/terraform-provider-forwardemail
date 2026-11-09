@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#MISE description="Run fmt, lint, and docs checks, then tag a release and push it to trigger the CI release workflow"
+#MISE depends=["fmt", "ci:lint", "ci:docs"]
+#USAGE arg "<tag>" help="v-prefixed semantic version to release, e.g. v0.1.0"
+set -euo pipefail
+
+TAG="${usage_tag:?}"
+if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+  echo "error: tag '$TAG' must be a v-prefixed semantic version" >&2
+  exit 1
+fi
+if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+  echo "error: tag '$TAG' already exists" >&2
+  exit 1
+fi
+if git show-ref --verify --quiet "refs/heads/$TAG" 2>/dev/null; then
+  echo "error: a branch named '$TAG' exists; tags and branches may not share a name" >&2
+  exit 1
+fi
+go mod tidy
+if [ -n "$(git status --porcelain)" ]; then
+  echo "error: working tree is dirty; commit or stash changes before tagging" >&2
+  git status --porcelain >&2
+  exit 1
+fi
+git tag -a "$TAG" -m "$TAG"
+git push origin --follow-tags

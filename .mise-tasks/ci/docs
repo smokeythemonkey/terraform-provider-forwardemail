@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#MISE description="Update the docs generated from description fields"
+#MISE sources=[
+#MISE   "forwardemail/**/*.go",
+#MISE   "main.go",
+#MISE   "examples/**/*.tf",
+#MISE   "examples/**/*.sh",
+#MISE ]
+#MISE outputs=["docs/**/*.md"]
+set -euo pipefail
+
+(cd tools && go generate ./...)
+sed -i.bak 's/forwardemail Provider/Forward Email Provider/g' docs/index.md && rm docs/index.md.bak

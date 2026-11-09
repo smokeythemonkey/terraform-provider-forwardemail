@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Remove any local overrides for local development"
+set -euo pipefail
+
+rm -f "$HOME/.terraformrc" "$HOME/.tofurc"

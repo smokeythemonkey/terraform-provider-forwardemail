@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       # The toolchain (Go, goreleaser) comes from mise.toml, so CI runs the
-      # exact same release command as local development: mise run release.
+      # same goreleaser command used for local dry runs.
       - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
           # Signed release artifacts must not come from a cache that a
@@ -37,7 +37,7 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASS }}
       - name: Run GoReleaser
-        run: mise run release
+        run: mise run ci:release
         env:
           # GitHub sets the GITHUB_TOKEN secret automatically.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

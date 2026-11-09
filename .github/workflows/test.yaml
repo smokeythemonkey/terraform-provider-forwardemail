@@ -37,7 +37,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
-      - run: mise run build
+      - run: mise run ci:build
 
   lint:
     name: Lint
@@ -48,7 +48,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
-      - run: mise run lint
+      - run: mise run ci:lint
 
   docs:
     name: Docs Test
@@ -61,10 +61,10 @@ jobs:
       - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
       - name: Check if docs are up-to-date
         run: |
-          mise run --force docs
+          mise run --force ci:docs
           git diff -- docs/ examples/
           BADDOCS=$(git status --porcelain -- docs/ examples/)
-          test -z "$BADDOCS" || (echo "documentation needs regenerating using 'mise run docs': $BADDOCS"; exit 1)
+          test -z "$BADDOCS" || (echo "documentation needs regenerating using 'mise run ci:docs': $BADDOCS"; exit 1)
 
   # Run acceptance tests in a matrix with Terraform CLI versions.
   # terraform-plugin-testing downloads the pinned Terraform CLI itself
@@ -96,5 +96,5 @@ jobs:
           TF_ACC: "1"
           TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform }}
           FORWARDEMAIL_API_KEY: ${{ secrets.FORWARDEMAIL_API_KEY }}
-        run: mise run test
+        run: mise run ci:test
         timeout-minutes: 15

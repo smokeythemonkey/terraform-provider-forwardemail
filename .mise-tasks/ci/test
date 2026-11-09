@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Run acceptance tests against the provider (API key from Bitwarden Secrets Manager)"
+#MISE env={ TF_ACC = "true" }
+set -euo pipefail
+
+go mod tidy
+fnox exec -- go test ./forwardemail/... -v -timeout=30m
+mise run sweep

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Build, sign, and publish a release for the current tag (requires GITHUB_TOKEN and a GPG key)"
+set -euo pipefail
+
+goreleaser release --clean
