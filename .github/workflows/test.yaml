@@ -19,7 +19,6 @@ on:
       - ".github/workflows/test.yaml"
       - ".github/workflows/release.yaml"
       - "README.md"
-      - "RELEASE.md"
       - ".go-version"
   push:
     branches:

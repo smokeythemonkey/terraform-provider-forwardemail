@@ -43,8 +43,6 @@ Releases are built, signed, and published by [goreleaser](https://goreleaser.com
 - `mise run release-dry` — build the release artifacts locally without publishing
 - `mise run release` — build, sign, and publish a release for the current tag
 
-See [RELEASE.md](RELEASE.md) for the full release and registry-publishing walkthrough, including the required GPG key and GitHub secrets.
-
 ## Examples
 
 ```terraform
