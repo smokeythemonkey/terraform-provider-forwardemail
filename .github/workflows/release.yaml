@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   goreleaser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
       # The toolchain (Go, goreleaser) comes from mise.toml, so CI runs the
       # exact same release command as local development: mise run release.
-      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
+      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
           # Signed release artifacts must not come from a cache that a
           # pull request could have poisoned.

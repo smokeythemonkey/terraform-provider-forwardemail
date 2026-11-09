@@ -1,0 +1,6 @@
+# actionlint 1.7.12 predates the ubuntu-26.04 runner image, which GitHub
+# added as a generally available label (see actions/runner-images#14748).
+# Whitelist it here until a newer actionlint ships an updated label set.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
