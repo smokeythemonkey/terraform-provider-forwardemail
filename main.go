@@ -5,8 +5,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/forwardemail/terraform-provider-forwardemail/forwardemail"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/smokeythemonkey/terraform-provider-forwardemail/forwardemail"
 )
 
 var version = "dev"

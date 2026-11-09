@@ -3,8 +3,8 @@ package forwardemail
 import (
 	"testing"
 
-	"github.com/forwardemail/terraform-provider-forwardemail/internal/sweep"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/smokeythemonkey/terraform-provider-forwardemail/internal/sweep"
 )
 
 // TestMain registers the resource sweepers and delegates to

@@ -1,4 +1,4 @@
-module github.com/forwardemail/terraform-provider-forwardemail
+module github.com/smokeythemonkey/terraform-provider-forwardemail
 
 go 1.25.8
 
