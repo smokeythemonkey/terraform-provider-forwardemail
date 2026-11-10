@@ -26,7 +26,7 @@ run = "gofmt -s -w -r 'interface{} -> any' ."
 
 [tasks.sweep]
 description = "Run sweeper tests to clean up resources. WARNING: This will destroy resources! Use with caution."
-run = "fnox exec -- go test ./forwardemail -v -timeout 5m -sweep=forwardemail"
+run = "fnox exec --only FORWARDEMAIL_API_KEY -- go test ./forwardemail -v -timeout 5m -sweep=forwardemail"
 
 [tasks.pre-commit]
 run = "hk run pre-commit"

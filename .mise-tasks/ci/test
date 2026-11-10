@@ -4,5 +4,5 @@
 set -euo pipefail
 
 go mod tidy
-fnox exec -- go test ./forwardemail/... -v -timeout=30m
+fnox exec --only FORWARDEMAIL_API_KEY -- go test ./forwardemail/... -v -timeout=30m
 mise run sweep
