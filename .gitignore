@@ -18,6 +18,7 @@
 **/.build-harness
 **/build-harness
 **/build
+!.mise-tasks/ci/build
 **/dist
 **/.helmfile/
 .DS_Store
