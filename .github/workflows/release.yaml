@@ -36,6 +36,11 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASS }}
+          # The release key's primary key (EFF8B7A0...) is certify-only and
+          # its secret is not exported, so the passphrase must be preset
+          # for the signing subkey only, not every keygrip of the key
+          # (see ghaction-import-gpg#119).
+          fingerprint: ${{ secrets.GPG_FINGERPRINT }}
       - name: Run GoReleaser
         run: mise run ci:release
         env:
