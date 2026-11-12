@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/forwardemail/forwardemail-api-go/forwardemail"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -16,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/smokeythemonkey/terraform-provider-forwardemail/internal/forwardemail"
 )
 
 var (

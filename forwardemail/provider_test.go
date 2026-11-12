@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/forwardemail/forwardemail-api-go/forwardemail"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	tfprotov6 "github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/smokeythemonkey/terraform-provider-forwardemail/internal/forwardemail"
 )
 
 // testAccProtoV6ProviderFactories attaches the framework provider to

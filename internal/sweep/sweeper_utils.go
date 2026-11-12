@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/forwardemail/forwardemail-api-go/forwardemail"
+	"github.com/smokeythemonkey/terraform-provider-forwardemail/internal/forwardemail"
 )
 
 var errNoAPIKey = errors.New("failed to find FORWARDEMAIL_API_KEY")

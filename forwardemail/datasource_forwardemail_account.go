@@ -3,10 +3,10 @@ package forwardemail
 import (
 	"context"
 
-	"github.com/forwardemail/forwardemail-api-go/forwardemail"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/smokeythemonkey/terraform-provider-forwardemail/internal/forwardemail"
 )
 
 var (

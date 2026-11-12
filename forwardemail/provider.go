@@ -5,13 +5,13 @@ import (
 	"context"
 	"os"
 
-	"github.com/forwardemail/forwardemail-api-go/forwardemail"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/smokeythemonkey/terraform-provider-forwardemail/internal/forwardemail"
 )
 
 type forwardemailProvider struct {

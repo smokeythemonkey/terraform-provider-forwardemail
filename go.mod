@@ -3,7 +3,7 @@ module github.com/smokeythemonkey/terraform-provider-forwardemail
 go 1.25.8
 
 require (
-	github.com/forwardemail/forwardemail-api-go v1.4.0
+	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/terraform-plugin-docs v0.20.1
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
@@ -25,7 +25,6 @@ require (
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/cli v1.1.7 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
