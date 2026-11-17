@@ -24,9 +24,19 @@ A resource to create Forward Email domain aliases.
 
 - `description` (String) Alias description.
 - `enabled` (Boolean) Whether to enable to disable this alias.
+- `error_code_if_disabled` (Number) SMTP response code to use when the alias is disabled (one of 250, 421, 550).
+- `has_imap` (Boolean) Whether to enable the webmail (IMAP) option for this alias.
+- `has_pgp` (Boolean) Whether to enable PGP encryption for this alias.
+- `has_smime` (Boolean) Whether to enable S/MIME encryption for this alias.
+- `has_wkd_disabled` (Boolean) Whether to disable Web Key Directory (WKD) lookups for this alias.
 - `labels` (List of String) List of labels.
+- `max_quota` (String) Maximum storage quota for this alias (e.g. "1 GB").
+- `public_key` (String) PGP public key (armored) used to encrypt inbound mail to this alias.
 - `recipient_verification` (Boolean) Whether to enable to require recipients to click an email verification link for emails to flow through.
 - `recipients` (List of String) List of recipients as valid email addresses, fully-qualified domain names (FQDN), IP addresses, or webhook URL's.
+- `retention` (Number) Number of days to retain emails for this alias (0-365).
+- `smime_certificate` (String) S/MIME certificate (PEM) used to encrypt inbound mail to this alias.
+- `smtp_limit` (Number) Maximum number of outbound SMTP messages per day for this alias (0 for unlimited).
 
 ### Read-Only
 

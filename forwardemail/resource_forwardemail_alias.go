@@ -38,6 +38,16 @@ type AliasModel struct {
 	Name                  types.String `tfsdk:"name"`
 	Enabled               types.Bool   `tfsdk:"enabled"`
 	RecipientVerification types.Bool   `tfsdk:"recipient_verification"`
+	HasIMAP               types.Bool   `tfsdk:"has_imap"`
+	HasPGP                types.Bool   `tfsdk:"has_pgp"`
+	PublicKey             types.String `tfsdk:"public_key"`
+	HasSMIME              types.Bool   `tfsdk:"has_smime"`
+	SMIMECertificate      types.String `tfsdk:"smime_certificate"`
+	HasWKDDisabled        types.Bool   `tfsdk:"has_wkd_disabled"`
+	ErrorCodeIfDisabled   types.Int64  `tfsdk:"error_code_if_disabled"`
+	MaxQuota              types.String `tfsdk:"max_quota"`
+	Retention             types.Int64  `tfsdk:"retention"`
+	SMTPLimit             types.Int64  `tfsdk:"smtp_limit"`
 	Recipient             types.List   `tfsdk:"recipients"`
 	Description           types.String `tfsdk:"description"`
 	Labels                types.List   `tfsdk:"labels"`
@@ -74,6 +84,53 @@ func (aliasResource *aliasResource) Schema(_ context.Context, _ resource.SchemaR
 				Computed:    true,
 				Default:     booldefault.StaticBool(false),
 				Description: "Whether to enable to require recipients to click an email verification link for emails to flow through.",
+			},
+			"has_imap": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
+				Description: "Whether to enable the webmail (IMAP) option for this alias.",
+			},
+			"has_pgp": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Whether to enable PGP encryption for this alias.",
+			},
+			"public_key": schema.StringAttribute{
+				Optional:    true,
+				Description: "PGP public key (armored) used to encrypt inbound mail to this alias.",
+			},
+			"has_smime": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Whether to enable S/MIME encryption for this alias.",
+			},
+			"smime_certificate": schema.StringAttribute{
+				Optional:    true,
+				Description: "S/MIME certificate (PEM) used to encrypt inbound mail to this alias.",
+			},
+			"has_wkd_disabled": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Whether to disable Web Key Directory (WKD) lookups for this alias.",
+			},
+			"error_code_if_disabled": schema.Int64Attribute{
+				Optional:    true,
+				Description: "SMTP response code to use when the alias is disabled (one of 250, 421, 550).",
+			},
+			"max_quota": schema.StringAttribute{
+				Optional:    true,
+				Description: "Maximum storage quota for this alias (e.g. \"1 GB\").",
+			},
+			"retention": schema.Int64Attribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Number of days to retain emails for this alias (0-365).",
+			},
+			"smtp_limit": schema.Int64Attribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Maximum number of outbound SMTP messages per day for this alias (0 for unlimited).",
 			},
 			"recipients": schema.ListAttribute{
 				Optional:    true,
@@ -132,6 +189,16 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 	params := forwardemail.AliasParameters{
 		HasRecipientVerification: plan.RecipientVerification.ValueBoolPointer(),
 		IsEnabled:                plan.Enabled.ValueBoolPointer(),
+		HasIMAP:                  plan.HasIMAP.ValueBoolPointer(),
+		HasPGP:                   plan.HasPGP.ValueBoolPointer(),
+		PublicKey:                plan.PublicKey.ValueString(),
+		HasSMIME:                 plan.HasSMIME.ValueBoolPointer(),
+		SMIMECertificate:         plan.SMIMECertificate.ValueString(),
+		HasWKDDisabled:           plan.HasWKDDisabled.ValueBoolPointer(),
+		ErrorCodeIfDisabled:      plan.ErrorCodeIfDisabled.ValueInt64Pointer(),
+		MaxQuota:                 plan.MaxQuota.ValueString(),
+		Retention:                plan.Retention.ValueInt64Pointer(),
+		SMTPLimit:                plan.SMTPLimit.ValueInt64Pointer(),
 		Recipients:               &recipients,
 		Labels:                   &labels,
 		Description:              plan.Description.ValueString(),
@@ -151,6 +218,16 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 	plan.Name = types.StringValue(alias.Name)
 	plan.Enabled = types.BoolValue(alias.IsEnabled)
 	plan.RecipientVerification = types.BoolValue(alias.HasRecipientVerification)
+	plan.HasIMAP = types.BoolValue(alias.HasIMAP)
+	plan.HasPGP = types.BoolValue(alias.HasPGP)
+	plan.PublicKey = types.StringValue(alias.PublicKey)
+	plan.HasSMIME = types.BoolValue(alias.HasSMIME)
+	plan.SMIMECertificate = types.StringValue(alias.SMIMECertificate)
+	plan.HasWKDDisabled = types.BoolValue(alias.HasWKDDisabled)
+	plan.ErrorCodeIfDisabled = types.Int64Value(int64(alias.ErrorCodeIfDisabled))
+	plan.MaxQuota = types.StringValue(alias.MaxQuota)
+	plan.Retention = types.Int64Value(int64(alias.Retention))
+	plan.SMTPLimit = types.Int64Value(int64(alias.SMTPLimit))
 	plan.Description = types.StringValue(alias.Description)
 
 	recipientsList, diags := types.ListValueFrom(ctx, types.StringType, alias.Recipients)
@@ -192,6 +269,16 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 	state.Name = types.StringValue(alias.Name)
 	state.Enabled = types.BoolValue(alias.IsEnabled)
 	state.RecipientVerification = types.BoolValue(alias.HasRecipientVerification)
+	state.HasIMAP = types.BoolValue(alias.HasIMAP)
+	state.HasPGP = types.BoolValue(alias.HasPGP)
+	state.PublicKey = types.StringValue(alias.PublicKey)
+	state.HasSMIME = types.BoolValue(alias.HasSMIME)
+	state.SMIMECertificate = types.StringValue(alias.SMIMECertificate)
+	state.HasWKDDisabled = types.BoolValue(alias.HasWKDDisabled)
+	state.ErrorCodeIfDisabled = types.Int64Value(int64(alias.ErrorCodeIfDisabled))
+	state.MaxQuota = types.StringValue(alias.MaxQuota)
+	state.Retention = types.Int64Value(int64(alias.Retention))
+	state.SMTPLimit = types.Int64Value(int64(alias.SMTPLimit))
 	state.Description = types.StringValue(alias.Description)
 
 	recipientsList, diags := types.ListValueFrom(ctx, types.StringType, alias.Recipients)
@@ -227,6 +314,16 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 	params := forwardemail.AliasParameters{
 		HasRecipientVerification: plan.RecipientVerification.ValueBoolPointer(),
 		IsEnabled:                plan.Enabled.ValueBoolPointer(),
+		HasIMAP:                  plan.HasIMAP.ValueBoolPointer(),
+		HasPGP:                   plan.HasPGP.ValueBoolPointer(),
+		PublicKey:                plan.PublicKey.ValueString(),
+		HasSMIME:                 plan.HasSMIME.ValueBoolPointer(),
+		SMIMECertificate:         plan.SMIMECertificate.ValueString(),
+		HasWKDDisabled:           plan.HasWKDDisabled.ValueBoolPointer(),
+		ErrorCodeIfDisabled:      plan.ErrorCodeIfDisabled.ValueInt64Pointer(),
+		MaxQuota:                 plan.MaxQuota.ValueString(),
+		Retention:                plan.Retention.ValueInt64Pointer(),
+		SMTPLimit:                plan.SMTPLimit.ValueInt64Pointer(),
 		Recipients:               &recipients,
 		Labels:                   &labels,
 		Description:              plan.Description.ValueString(),
@@ -255,6 +352,16 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 	plan.Name = types.StringValue(alias.Name)
 	plan.Enabled = types.BoolValue(alias.IsEnabled)
 	plan.RecipientVerification = types.BoolValue(alias.HasRecipientVerification)
+	plan.HasIMAP = types.BoolValue(alias.HasIMAP)
+	plan.HasPGP = types.BoolValue(alias.HasPGP)
+	plan.PublicKey = types.StringValue(alias.PublicKey)
+	plan.HasSMIME = types.BoolValue(alias.HasSMIME)
+	plan.SMIMECertificate = types.StringValue(alias.SMIMECertificate)
+	plan.HasWKDDisabled = types.BoolValue(alias.HasWKDDisabled)
+	plan.ErrorCodeIfDisabled = types.Int64Value(int64(alias.ErrorCodeIfDisabled))
+	plan.MaxQuota = types.StringValue(alias.MaxQuota)
+	plan.Retention = types.Int64Value(int64(alias.Retention))
+	plan.SMTPLimit = types.Int64Value(int64(alias.SMTPLimit))
 	plan.Description = types.StringValue(alias.Description)
 
 	recipientsList, diags := types.ListValueFrom(ctx, types.StringType, alias.Recipients)
