@@ -309,7 +309,7 @@ func TestClient_CreateAlias(t *testing.T) {
 				"has_smime": true,
 				"smime_certificate": "-----BEGIN CERTIFICATE-----",
 				"has_wkd_disabled": true,
-				"max_quota": "1 GB",
+				"max_quota": 1073741824,
 				"retention": 30,
 				"smtp_limit": 100,
 				"recipients": [
@@ -341,7 +341,7 @@ func TestClient_CreateAlias(t *testing.T) {
 				HasSMIME:                 true,
 				SMIMECertificate:         "-----BEGIN CERTIFICATE-----",
 				HasWKDDisabled:           true,
-				MaxQuota:                 "1 GB",
+				MaxQuota:                 flexString("1073741824"),
 				Retention:                30,
 				SMTPLimit:                100,
 				Description:              "main email",

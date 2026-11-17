@@ -10,30 +10,49 @@ import (
 	"time"
 )
 
+// flexString unmarshals a JSON string or number into a string. The API
+// returns max_quota as a number (bytes) in responses but accepts a string
+// like "1 GB" on write, so the response field needs a tolerant type.
+type flexString string
+
+func (f *flexString) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		*f = flexString(s)
+		return nil
+	}
+	var n json.Number
+	if err := json.Unmarshal(data, &n); err == nil {
+		*f = flexString(n.String())
+		return nil
+	}
+	return fmt.Errorf("%w: %s", ErrUnsupportedJSONValue, data)
+}
+
 // Alias represents an email alias configuration including recipients, labels, and verification settings.
 type Alias struct {
-	Account                  Account   `json:"user"`
-	Domain                   Domain    `json:"domain"`
-	Name                     string    `json:"name"`
-	Labels                   []string  `json:"labels"`
-	Description              string    `json:"description"`
-	IsEnabled                bool      `json:"is_enabled"`
-	ErrorCodeIfDisabled      int       `json:"error_code_if_disabled"`
-	HasRecipientVerification bool      `json:"has_recipient_verification"`
-	HasIMAP                  bool      `json:"has_imap"`
-	HasPGP                   bool      `json:"has_pgp"`
-	PublicKey                string    `json:"public_key"`
-	HasSMIME                 bool      `json:"has_smime"`
-	SMIMECertificate         string    `json:"smime_certificate"`
-	HasWKDDisabled           bool      `json:"has_wkd_disabled"`
-	MaxQuota                 string    `json:"max_quota"`
-	Retention                int       `json:"retention"`
-	SMTPLimit                int       `json:"smtp_limit"`
-	Recipients               []string  `json:"recipients"`
-	ID                       string    `json:"id"`
-	Object                   string    `json:"object"`
-	CreatedAt                time.Time `json:"created_at"`
-	UpdatedAt                time.Time `json:"updated_at"`
+	Account                  Account    `json:"user"`
+	Domain                   Domain     `json:"domain"`
+	Name                     string     `json:"name"`
+	Labels                   []string   `json:"labels"`
+	Description              string     `json:"description"`
+	IsEnabled                bool       `json:"is_enabled"`
+	ErrorCodeIfDisabled      int        `json:"error_code_if_disabled"`
+	HasRecipientVerification bool       `json:"has_recipient_verification"`
+	HasIMAP                  bool       `json:"has_imap"`
+	HasPGP                   bool       `json:"has_pgp"`
+	PublicKey                string     `json:"public_key"`
+	HasSMIME                 bool       `json:"has_smime"`
+	SMIMECertificate         string     `json:"smime_certificate"`
+	HasWKDDisabled           bool       `json:"has_wkd_disabled"`
+	MaxQuota                 flexString `json:"max_quota"`
+	Retention                int        `json:"retention"`
+	SMTPLimit                int        `json:"smtp_limit"`
+	Recipients               []string   `json:"recipients"`
+	ID                       string     `json:"id"`
+	Object                   string     `json:"object"`
+	CreatedAt                time.Time  `json:"created_at"`
+	UpdatedAt                time.Time  `json:"updated_at"`
 }
 
 // AliasParameters contains optional parameters for creating or updating an alias.

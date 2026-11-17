@@ -42,6 +42,8 @@ var (
 
 	// ErrMissingEncryptionInput is returned when required input for encryption is missing.
 	ErrMissingEncryptionInput = errors.New("missing required input for encryption")
+	// ErrUnsupportedJSONValue is returned when a JSON value cannot be decoded into the expected type.
+	ErrUnsupportedJSONValue = errors.New("unsupported JSON value")
 )
 
 // APIError represents an error response from the Forward Email API.
