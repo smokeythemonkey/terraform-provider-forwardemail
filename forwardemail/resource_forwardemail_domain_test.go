@@ -14,13 +14,13 @@ func testAccDomainResource(t *testing.T) resource.TestCase {
 			{
 				Config: testAccDomainResourceConfig(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("forwardemail_domain.test", "name", "example.com"),
+					resource.TestCheckResourceAttr("forwardemail_domain.test", "name", "forwardemailprovider.com"),
 				),
 			},
 			{
 				Config: testAccDomainResourceConfigUpdate(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("forwardemail_domain.test", "name", "example.com"),
+					resource.TestCheckResourceAttr("forwardemail_domain.test", "name", "forwardemailprovider.com"),
 					resource.TestCheckResourceAttr("forwardemail_domain.test", "adult_content_protection", "false"),
 					resource.TestCheckResourceAttr("forwardemail_domain.test", "recipient_verification", "false"),
 				),
@@ -28,7 +28,7 @@ func testAccDomainResource(t *testing.T) resource.TestCase {
 			{
 				ResourceName:      "forwardemail_domain.test",
 				ImportState:       true,
-				ImportStateId:     "example.com",
+				ImportStateId:     "forwardemailprovider.com",
 				ImportStateVerify: true,
 			},
 		},
@@ -38,7 +38,7 @@ func testAccDomainResource(t *testing.T) resource.TestCase {
 func testAccDomainResourceConfig() string {
 	return `
 resource "forwardemail_domain" "test" {
-  name = "example.com"
+  name = "forwardemailprovider.com"
 }
 `
 }
@@ -46,7 +46,7 @@ resource "forwardemail_domain" "test" {
 func testAccDomainResourceConfigUpdate() string {
 	return `
 resource "forwardemail_domain" "test" {
-  name = "example.com"
+  name = "forwardemailprovider.com"
 
   adult_content_protection = false
   recipient_verification    = false
