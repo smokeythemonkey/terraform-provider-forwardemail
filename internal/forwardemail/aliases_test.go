@@ -273,6 +273,16 @@ func TestClient_CreateAlias(t *testing.T) {
 					Description:              "main email",
 					IsEnabled:                pointBool(true),
 					HasRecipientVerification: pointBool(true),
+					HasIMAP:                  pointBool(true),
+					HasPGP:                   pointBool(true),
+					PublicKey:                "-----BEGIN PGP PUBLIC KEY BLOCK-----",
+					HasSMIME:                 pointBool(true),
+					SMIMECertificate:         "-----BEGIN CERTIFICATE-----",
+					HasWKDDisabled:           pointBool(true),
+					ErrorCodeIfDisabled:      pointInt64(250),
+					MaxQuota:                 "1 GB",
+					Retention:                pointInt64(30),
+					SMTPLimit:                pointInt64(100),
 				},
 			},
 			res: `{
@@ -291,7 +301,17 @@ func TestClient_CreateAlias(t *testing.T) {
 				],
 				"description": "main email",
 				"is_enabled": true,
+				"error_code_if_disabled": 250,
 				"has_recipient_verification": true,
+				"has_imap": true,
+				"has_pgp": true,
+				"public_key": "-----BEGIN PGP PUBLIC KEY BLOCK-----",
+				"has_smime": true,
+				"smime_certificate": "-----BEGIN CERTIFICATE-----",
+				"has_wkd_disabled": true,
+				"max_quota": "1 GB",
+				"retention": 30,
+				"smtp_limit": 100,
 				"recipients": [
 				  "james@rhodes.com"
 				],
@@ -313,7 +333,17 @@ func TestClient_CreateAlias(t *testing.T) {
 				Name:                     "*",
 				Labels:                   []string{"catch-all"},
 				IsEnabled:                true,
+				ErrorCodeIfDisabled:      250,
 				HasRecipientVerification: true,
+				HasIMAP:                  true,
+				HasPGP:                   true,
+				PublicKey:                "-----BEGIN PGP PUBLIC KEY BLOCK-----",
+				HasSMIME:                 true,
+				SMIMECertificate:         "-----BEGIN CERTIFICATE-----",
+				HasWKDDisabled:           true,
+				MaxQuota:                 "1 GB",
+				Retention:                30,
+				SMTPLimit:                100,
 				Description:              "main email",
 				Recipients:               []string{"james@rhodes.com"},
 				ID:                       "6525b03e0bde8f333ace5824",
@@ -509,4 +539,8 @@ func TestClient_DeleteAlias(t *testing.T) {
 
 func pointSliceOfStrings(s []string) *[]string {
 	return &s
+}
+
+func pointInt64(v int64) *int64 {
+	return &v
 }

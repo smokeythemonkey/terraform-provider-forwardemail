@@ -1,6 +1,3 @@
-// Copyright Forward Email 2026
-// SPDX-License-Identifier: MIT
-
 package forwardemail
 
 import (
@@ -21,7 +18,17 @@ type Alias struct {
 	Labels                   []string  `json:"labels"`
 	Description              string    `json:"description"`
 	IsEnabled                bool      `json:"is_enabled"`
+	ErrorCodeIfDisabled      int       `json:"error_code_if_disabled"`
 	HasRecipientVerification bool      `json:"has_recipient_verification"`
+	HasIMAP                  bool      `json:"has_imap"`
+	HasPGP                   bool      `json:"has_pgp"`
+	PublicKey                string    `json:"public_key"`
+	HasSMIME                 bool      `json:"has_smime"`
+	SMIMECertificate         string    `json:"smime_certificate"`
+	HasWKDDisabled           bool      `json:"has_wkd_disabled"`
+	MaxQuota                 string    `json:"max_quota"`
+	Retention                int       `json:"retention"`
+	SMTPLimit                int       `json:"smtp_limit"`
 	Recipients               []string  `json:"recipients"`
 	ID                       string    `json:"id"`
 	Object                   string    `json:"object"`
@@ -36,6 +43,16 @@ type AliasParameters struct {
 	Description              string `json:"description"`
 	HasRecipientVerification *bool
 	IsEnabled                *bool
+	ErrorCodeIfDisabled      *int64
+	HasIMAP                  *bool
+	HasPGP                   *bool
+	PublicKey                string
+	HasSMIME                 *bool
+	SMIMECertificate         string
+	HasWKDDisabled           *bool
+	MaxQuota                 string
+	Retention                *int64
+	SMTPLimit                *int64
 }
 
 // GetAliases retrieves all email aliases for the specified domain.
@@ -190,16 +207,37 @@ func (c *Client) UpdateAlias(ctx context.Context, domain, alias string, paramete
 }
 
 func encodeAliasParams(params url.Values, parameters AliasParameters) {
-	if parameters.Description != "" {
-		params.Add("description", parameters.Description)
+	for k, v := range map[string]string{
+		"description":       parameters.Description,
+		"public_key":        parameters.PublicKey,
+		"smime_certificate": parameters.SMIMECertificate,
+		"max_quota":         parameters.MaxQuota,
+	} {
+		if v != "" {
+			params.Add(k, v)
+		}
 	}
 
 	for k, v := range map[string]*bool{
 		"has_recipient_verification": parameters.HasRecipientVerification,
 		"is_enabled":                 parameters.IsEnabled,
+		"has_imap":                   parameters.HasIMAP,
+		"has_pgp":                    parameters.HasPGP,
+		"has_smime":                  parameters.HasSMIME,
+		"has_wkd_disabled":           parameters.HasWKDDisabled,
 	} {
 		if v != nil {
 			params.Add(k, strconv.FormatBool(*v))
+		}
+	}
+
+	for k, v := range map[string]*int64{
+		"error_code_if_disabled": parameters.ErrorCodeIfDisabled,
+		"retention":              parameters.Retention,
+		"smtp_limit":             parameters.SMTPLimit,
+	} {
+		if v != nil {
+			params.Add(k, strconv.FormatInt(*v, 10))
 		}
 	}
 
