@@ -15,8 +15,8 @@ func testAccAliasResource(t *testing.T) resource.TestCase {
 			{
 				Config: testAccAliasResourceConfig(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("forwardemail_domain.test", "name", "example.com"),
-					resource.TestCheckResourceAttr("forwardemail_alias.test", "domain", "example.com"),
+					resource.TestCheckResourceAttr("forwardemail_domain.test", "name", "forwardemailprovider.com"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "domain", "forwardemailprovider.com"),
 					resource.TestCheckResourceAttr("forwardemail_alias.test", "name", "postmaster"),
 				),
 			},
@@ -24,19 +24,35 @@ func testAccAliasResource(t *testing.T) resource.TestCase {
 				Config: testAccAliasResourceConfigUpdate(),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("forwardemail_alias.test", "recipients.#", "2"),
-					resource.TestCheckResourceAttr("forwardemail_alias.test", "recipients.0", "user@example.com"),
-					resource.TestCheckResourceAttr("forwardemail_alias.test", "recipients.1", "admin@example.com"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "recipients.0", "user@external-example.com"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "recipients.1", "admin@external-example.com"),
 					resource.TestCheckResourceAttr("forwardemail_alias.test", "description", "updated description"),
 					resource.TestCheckResourceAttr("forwardemail_alias.test", "labels.#", "1"),
 					resource.TestCheckResourceAttr("forwardemail_alias.test", "labels.0", "production"),
 					resource.TestCheckResourceAttr("forwardemail_alias.test", "enabled", "false"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "has_imap", "true"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "has_pgp", "true"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "has_smime", "false"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "has_wkd_disabled", "true"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "error_code_if_disabled", "421"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "max_quota", "1 GB"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "retention", "30"),
+					resource.TestCheckResourceAttr("forwardemail_alias.test", "smtp_limit", "100"),
 				),
 			},
 			{
 				ResourceName:      "forwardemail_alias.test",
 				ImportState:       true,
-				ImportStateId:     "example.com/postmaster",
+				ImportStateId:     "forwardemailprovider.com/postmaster",
 				ImportStateVerify: true,
+				// One-way params are accepted by the API but not echoed in
+				// GET responses, so imported state cannot reproduce them.
+				ImportStateVerifyIgnore: []string{
+					"error_code_if_disabled",
+					"max_quota",
+					"public_key",
+					"smime_certificate",
+				},
 			},
 			{
 				ResourceName:  "forwardemail_alias.test",
@@ -51,13 +67,13 @@ func testAccAliasResource(t *testing.T) resource.TestCase {
 func testAccAliasResourceConfig() string {
 	return `
 resource "forwardemail_domain" "test" {
-  name = "example.com"
+  name = "forwardemailprovider.com"
 }
 
 resource "forwardemail_alias" "test" {
   name       = "postmaster"
   domain     = forwardemail_domain.test.name
-  recipients = ["user@example.com"]
+  recipients = ["user@external-example.com"]
 }
 `
 }
@@ -65,16 +81,25 @@ resource "forwardemail_alias" "test" {
 func testAccAliasResourceConfigUpdate() string {
 	return `
 resource "forwardemail_domain" "test" {
-  name = "example.com"
+  name = "forwardemailprovider.com"
 }
 
 resource "forwardemail_alias" "test" {
   name        = "postmaster"
   domain      = forwardemail_domain.test.name
-  recipients  = ["user@example.com", "admin@example.com"]
+  recipients  = ["user@external-example.com", "admin@external-example.com"]
   description = "updated description"
   labels      = ["production"]
   enabled     = false
+
+  has_imap               = true
+  has_pgp                = true
+  has_smime              = false
+  has_wkd_disabled       = true
+  error_code_if_disabled = 421
+  max_quota              = "1 GB"
+  retention              = 30
+  smtp_limit             = 100
 }
 `
 }
