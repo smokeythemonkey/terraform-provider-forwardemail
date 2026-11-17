@@ -34,4 +34,5 @@ provider "forwardemail" {
 
 ### Optional
 
+- `allow_domain_deletion` (Boolean) Allow `forwardemail_domain` resources to be deleted. Domain deletion in Forward Email is destructive and irreversible, so it is refused unless this is set to `true` (or `FORWARDEMAIL_ALLOW_DOMAIN_DELETION=true`).
 - `api_key` (String, Sensitive) The API key for Forwardemail access and management.

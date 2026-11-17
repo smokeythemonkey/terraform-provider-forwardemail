@@ -67,16 +67,16 @@ func (accountSource *accountDataSource) Configure(_ context.Context, req datasou
 		return
 	}
 
-	client, ok := req.ProviderData.(*forwardemail.Client)
+	cfg, ok := req.ProviderData.(*providerConfig)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			"Expected *forwardemail.Client, got something else. "+
+			"Expected *providerConfig, got something else. "+
 				"Please report this issue to the provider maintainers",
 		)
 		return
 	}
-	accountSource.client = client
+	accountSource.client = cfg.client
 }
 
 func (accountSource *accountDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

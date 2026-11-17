@@ -7,6 +7,7 @@ import (
 )
 
 func testAccDomainResource(t *testing.T) resource.TestCase {
+	t.Setenv("FORWARDEMAIL_ALLOW_DOMAIN_DELETION", "true")
 	return resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),

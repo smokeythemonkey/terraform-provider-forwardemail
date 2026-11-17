@@ -22,6 +22,8 @@ var (
 
 type domainResource struct {
 	client *forwardemail.Client
+	// allowDeletion gates Delete; see the provider's allow_domain_deletion attribute.
+	allowDeletion bool
 }
 
 func NewDomainResource() resource.Resource {
@@ -93,15 +95,16 @@ func (domainResource *domainResource) Configure(_ context.Context, req resource.
 		return
 	}
 
-	client, ok := req.ProviderData.(*forwardemail.Client)
+	cfg, ok := req.ProviderData.(*providerConfig)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *forwardemail.Client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+			fmt.Sprintf("Expected *providerConfig, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
 		)
 		return
 	}
-	domainResource.client = client
+	domainResource.client = cfg.client
+	domainResource.allowDeletion = cfg.allowDomainDeletion
 }
 
 func (domainResource *domainResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -220,6 +223,14 @@ func (domainResource *domainResource) Delete(ctx context.Context, req resource.D
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !domainResource.allowDeletion {
+		resp.Diagnostics.AddError(
+			"Domain deletion refused",
+			fmt.Sprintf("Deleting domain %q is destructive and irreversible. Set the provider attribute allow_domain_deletion = true (or FORWARDEMAIL_ALLOW_DOMAIN_DELETION=true) to allow it.", state.Id.ValueString()),
+		)
 		return
 	}
 

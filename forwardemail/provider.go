@@ -14,6 +14,15 @@ import (
 	"github.com/smokeythemonkey/terraform-provider-forwardemail/internal/forwardemail"
 )
 
+// providerConfig is passed to resources via Configure as ProviderData.
+type providerConfig struct {
+	client *forwardemail.Client
+	// allowDomainDeletion gates forwardemail_domain Delete. Deleting a
+	// domain in Forward Email is destructive and irreversible, so the
+	// provider refuses unless this is explicitly enabled.
+	allowDomainDeletion bool
+}
+
 type forwardemailProvider struct {
 	version string
 }
@@ -38,6 +47,10 @@ func (p *forwardemailProvider) Schema(_ context.Context, _ provider.SchemaReques
 				Optional:            true,
 				Sensitive:           true,
 			},
+			"allow_domain_deletion": schema.BoolAttribute{
+				MarkdownDescription: "Allow `forwardemail_domain` resources to be deleted. Domain deletion in Forward Email is destructive and irreversible, so it is refused unless this is set to `true` (or `FORWARDEMAIL_ALLOW_DOMAIN_DELETION=true`).",
+				Optional:            true,
+			},
 		},
 	}
 }
@@ -58,6 +71,12 @@ func (p *forwardemailProvider) Configure(ctx context.Context, req provider.Confi
 		return
 	}
 
+	var allowDomainDeletion types.Bool
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("allow_domain_deletion"), &allowDomainDeletion)...)
+	if allowDomainDeletion.IsNull() {
+		allowDomainDeletion = types.BoolValue(os.Getenv("FORWARDEMAIL_ALLOW_DOMAIN_DELETION") == "true")
+	}
+
 	client, err := forwardemail.NewClient(apiKey.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -65,8 +84,9 @@ func (p *forwardemailProvider) Configure(ctx context.Context, req provider.Confi
 		)
 		return
 	}
-	resp.ResourceData = client
-	resp.DataSourceData = client
+	cfg := &providerConfig{client: client, allowDomainDeletion: allowDomainDeletion.ValueBool()}
+	resp.ResourceData = cfg
+	resp.DataSourceData = cfg
 }
 
 func (p *forwardemailProvider) Resources(_ context.Context) []func() resource.Resource {

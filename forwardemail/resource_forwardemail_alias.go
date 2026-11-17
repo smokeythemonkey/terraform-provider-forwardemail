@@ -160,15 +160,15 @@ func (aliasResource *aliasResource) Configure(_ context.Context, req resource.Co
 		return
 	}
 
-	client, ok := req.ProviderData.(*forwardemail.Client)
+	cfg, ok := req.ProviderData.(*providerConfig)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *forwardemail.Client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
+			fmt.Sprintf("Expected *providerConfig, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
 		)
 		return
 	}
-	aliasResource.client = client
+	aliasResource.client = cfg.client
 }
 
 func (aliasResource *aliasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -216,16 +216,18 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 	plan.Id = types.StringValue(alias.Name)
 	plan.Domain = types.StringValue(alias.Domain.Name)
 	plan.Name = types.StringValue(alias.Name)
+	// Echoed attributes are materialized from the API response (they are
+	// Computed, so the plan value may be unknown here). One-way attributes
+	// (public_key, smime_certificate, error_code_if_disabled, max_quota)
+	// are NOT set from the response: the API may echo a default for them,
+	// and overwriting a null plan value with it fails the apply with
+	// "inconsistent result after apply".
 	plan.Enabled = types.BoolValue(alias.IsEnabled)
 	plan.RecipientVerification = types.BoolValue(alias.HasRecipientVerification)
 	plan.HasIMAP = types.BoolValue(alias.HasIMAP)
 	plan.HasPGP = types.BoolValue(alias.HasPGP)
-	plan.PublicKey = stringValueOrNull(alias.PublicKey)
 	plan.HasSMIME = types.BoolValue(alias.HasSMIME)
-	plan.SMIMECertificate = stringValueOrNull(alias.SMIMECertificate)
 	plan.HasWKDDisabled = types.BoolValue(alias.HasWKDDisabled)
-	plan.ErrorCodeIfDisabled = int64ValueOrNull(int64(alias.ErrorCodeIfDisabled))
-	plan.MaxQuota = stringValueOrNull(alias.MaxQuota)
 	plan.Retention = types.Int64Value(int64(alias.Retention))
 	plan.SMTPLimit = types.Int64Value(int64(alias.SMTPLimit))
 	plan.Description = types.StringValue(alias.Description)
@@ -267,16 +269,16 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 	state.Id = types.StringValue(alias.Name)
 	state.Domain = types.StringValue(alias.Domain.Name)
 	state.Name = types.StringValue(alias.Name)
+	// Echoed attributes refresh from the API so out-of-band drift is
+	// detected. One-way attributes (public_key, smime_certificate,
+	// error_code_if_disabled, max_quota) are not reliably echoed and must
+	// keep their prior state value.
 	state.Enabled = types.BoolValue(alias.IsEnabled)
 	state.RecipientVerification = types.BoolValue(alias.HasRecipientVerification)
 	state.HasIMAP = types.BoolValue(alias.HasIMAP)
 	state.HasPGP = types.BoolValue(alias.HasPGP)
-	state.PublicKey = stringValueOrNull(alias.PublicKey)
 	state.HasSMIME = types.BoolValue(alias.HasSMIME)
-	state.SMIMECertificate = stringValueOrNull(alias.SMIMECertificate)
 	state.HasWKDDisabled = types.BoolValue(alias.HasWKDDisabled)
-	state.ErrorCodeIfDisabled = int64ValueOrNull(int64(alias.ErrorCodeIfDisabled))
-	state.MaxQuota = stringValueOrNull(alias.MaxQuota)
 	state.Retention = types.Int64Value(int64(alias.Retention))
 	state.SMTPLimit = types.Int64Value(int64(alias.SMTPLimit))
 	state.Description = types.StringValue(alias.Description)
@@ -345,32 +347,12 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 		}
 	}
 
-	// Computed attributes (id) are unknown in the plan during update, so
-	// every value must be set from the API response before saving state.
+	// Only identity fields come from the API; every planned value is kept
+	// so Terraform does not report an inconsistent result when the API
+	// normalizes or does not echo a parameter back.
 	plan.Id = types.StringValue(alias.Name)
 	plan.Domain = types.StringValue(alias.Domain.Name)
 	plan.Name = types.StringValue(alias.Name)
-	plan.Enabled = types.BoolValue(alias.IsEnabled)
-	plan.RecipientVerification = types.BoolValue(alias.HasRecipientVerification)
-	plan.HasIMAP = types.BoolValue(alias.HasIMAP)
-	plan.HasPGP = types.BoolValue(alias.HasPGP)
-	plan.PublicKey = stringValueOrNull(alias.PublicKey)
-	plan.HasSMIME = types.BoolValue(alias.HasSMIME)
-	plan.SMIMECertificate = stringValueOrNull(alias.SMIMECertificate)
-	plan.HasWKDDisabled = types.BoolValue(alias.HasWKDDisabled)
-	plan.ErrorCodeIfDisabled = int64ValueOrNull(int64(alias.ErrorCodeIfDisabled))
-	plan.MaxQuota = stringValueOrNull(alias.MaxQuota)
-	plan.Retention = types.Int64Value(int64(alias.Retention))
-	plan.SMTPLimit = types.Int64Value(int64(alias.SMTPLimit))
-	plan.Description = types.StringValue(alias.Description)
-
-	recipientsList, diags := types.ListValueFrom(ctx, types.StringType, alias.Recipients)
-	resp.Diagnostics.Append(diags...)
-	plan.Recipient = recipientsList
-
-	labelsList, diags := types.ListValueFrom(ctx, types.StringType, alias.Labels)
-	resp.Diagnostics.Append(diags...)
-	plan.Labels = labelsList
 
 	if resp.Diagnostics.HasError() {
 		return
