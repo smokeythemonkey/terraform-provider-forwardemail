@@ -47,7 +47,11 @@ type APIError struct {
 }
 
 func (e *APIError) Error() string {
-	return fmt.Sprintf("forwardemail: API error %d: %s", e.StatusCode, http.StatusText(e.StatusCode))
+	msg := fmt.Sprintf("forwardemail: API error %d: %s", e.StatusCode, http.StatusText(e.StatusCode))
+	if len(e.Body) > 0 {
+		msg += ": " + string(e.Body)
+	}
+	return msg
 }
 
 // IsStatus reports whether err is (or wraps) an *APIError with the given
