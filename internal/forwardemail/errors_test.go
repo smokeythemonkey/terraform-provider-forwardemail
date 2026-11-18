@@ -13,6 +13,33 @@ import (
 
 var errConnectionRefused = errors.New("connection refused")
 
+// Sentinel error strings carry the package prefix (so the origin is
+// identifiable when they surface un-wrapped in logs) and are fully
+// lowercase, acronyms included.
+func TestSentinelErrorMessages(t *testing.T) {
+	sentinels := map[error]string{
+		ErrMissingAPIKey:          "forwardemail: no api key provided",
+		ErrNilContext:             "forwardemail: context cannot be nil",
+		ErrEmptyMethod:            "forwardemail: http method cannot be empty",
+		ErrEmptyPath:              "forwardemail: request path cannot be empty",
+		ErrNilHTTPClient:          "forwardemail: http client cannot be nil",
+		ErrResponseTooLarge:       "forwardemail: api response too large",
+		ErrEmptyDomain:            "forwardemail: domain cannot be empty",
+		ErrEmptyAlias:             "forwardemail: alias cannot be empty",
+		ErrEmptyDomainName:        "forwardemail: domain name cannot be empty",
+		ErrEmptyEmail:             "forwardemail: email cannot be empty",
+		ErrEmptyGroup:             "forwardemail: group cannot be empty",
+		ErrMissingEncryptionInput: "forwardemail: missing required input for encryption",
+		ErrUnsupportedJSONValue:   "forwardemail: unsupported json value",
+	}
+
+	for err, want := range sentinels {
+		if got := err.Error(); got != want {
+			t.Errorf("%v.Error() = %q, want %q", err, got, want)
+		}
+	}
+}
+
 // Error() must surface the API's response body (already truncated to
 // maxErrorBodyBytes by the client) so users see why a request failed,
 // not just the status code.
