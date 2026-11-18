@@ -106,7 +106,8 @@ func (c *Client) GetAliases(ctx context.Context, domain string) ([]Alias, error)
 	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(domain) == "" {
+	domain = strings.TrimSpace(domain)
+	if domain == "" {
 		return nil, ErrEmptyDomain
 	}
 
@@ -135,10 +136,12 @@ func (c *Client) GetAlias(ctx context.Context, domain, alias string) (*Alias, er
 	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(domain) == "" {
+	domain = strings.TrimSpace(domain)
+	if domain == "" {
 		return nil, ErrEmptyDomain
 	}
-	if strings.TrimSpace(alias) == "" {
+	alias = strings.TrimSpace(alias)
+	if alias == "" {
 		return nil, ErrEmptyAlias
 	}
 
@@ -168,10 +171,12 @@ func (c *Client) CreateAlias(ctx context.Context, domain, alias string, paramete
 	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(domain) == "" {
+	domain = strings.TrimSpace(domain)
+	if domain == "" {
 		return nil, ErrEmptyDomain
 	}
-	if strings.TrimSpace(alias) == "" {
+	alias = strings.TrimSpace(alias)
+	if alias == "" {
 		return nil, ErrEmptyAlias
 	}
 
@@ -206,10 +211,12 @@ func (c *Client) UpdateAlias(ctx context.Context, domain, alias string, paramete
 	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(domain) == "" {
+	domain = strings.TrimSpace(domain)
+	if domain == "" {
 		return nil, ErrEmptyDomain
 	}
-	if strings.TrimSpace(alias) == "" {
+	alias = strings.TrimSpace(alias)
+	if alias == "" {
 		return nil, ErrEmptyAlias
 	}
 

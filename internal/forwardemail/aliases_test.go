@@ -612,6 +612,33 @@ func pointSliceOfStrings(s []string) *[]string {
 	return &s
 }
 
+// Alias methods validate with TrimSpace, so the trimmed value must be the
+// one sent to the API (path segment and form field), matching domain methods.
+func TestClient_UpdateAliasTrimsNameBeforeSending(t *testing.T) {
+	var gotPath, gotName string
+
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		_ = r.ParseForm()
+		gotName = r.PostForm.Get("name")
+		fmt.Fprint(w, `{"name":"tony","domain":{"name":"stark.com"}}`)
+	}))
+	defer svr.Close()
+
+	c := newTestClient(t, WithAPIURL(svr.URL))
+
+	const padded = "  tony  "
+	if _, err := c.UpdateAlias(context.Background(), "stark.com", padded, AliasParameters{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if want := "/v1/domains/stark.com/aliases/tony"; gotPath != want {
+		t.Errorf("path = %q, want %q", gotPath, want)
+	}
+	if gotName != "tony" {
+		t.Errorf("name sent to API = %q, want %q", gotName, "tony")
+	}
+}
+
 func pointString(s string) *string {
 	return &s
 }
