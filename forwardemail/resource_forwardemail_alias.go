@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"strings"
 
+	int64validator "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/smokeythemonkey/terraform-provider-forwardemail/internal/forwardemail"
 )
@@ -115,6 +117,9 @@ func (aliasResource *aliasResource) Schema(_ context.Context, _ resource.SchemaR
 			"error_code_if_disabled": schema.Int64Attribute{
 				Optional:    true,
 				Description: "SMTP response code to use when the alias is disabled (one of 250, 421, 550).",
+				Validators: []validator.Int64{
+					int64validator.OneOf(250, 421, 550),
+				},
 			},
 			"max_quota": schema.StringAttribute{
 				Optional:    true,
@@ -124,6 +129,9 @@ func (aliasResource *aliasResource) Schema(_ context.Context, _ resource.SchemaR
 				Optional:    true,
 				Computed:    true,
 				Description: "Number of days to retain emails for this alias (0-365).",
+				Validators: []validator.Int64{
+					int64validator.Between(0, 365),
+				},
 			},
 			"smtp_limit": schema.Int64Attribute{
 				Optional:    true,
