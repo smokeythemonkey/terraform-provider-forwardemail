@@ -17,8 +17,8 @@ A resource to create Forward Email domain aliases.
 
 ### Required
 
-- `domain` (String) Fully qualified domain name (FQDN).
-- `name` (String) Alias name.
+- `domain` (String) Fully qualified domain name (FQDN). Changing this forces a new resource.
+- `name` (String) Alias name. Changing this forces a new resource.
 
 ### Optional
 

@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/smokeythemonkey/terraform-provider-forwardemail/internal/forwardemail"
 )
@@ -53,7 +55,10 @@ func (domainResource *domainResource) Schema(_ context.Context, _ resource.Schem
 			},
 			"name": schema.StringAttribute{
 				Required:    true,
-				Description: "Fully qualified domain name (FQDN) or IP address.",
+				Description: "Fully qualified domain name (FQDN) or IP address. Changing this forces a new resource; note that destroying the old domain requires the provider attribute allow_domain_deletion = true.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"adult_content_protection": schema.BoolAttribute{
 				Optional:    true,

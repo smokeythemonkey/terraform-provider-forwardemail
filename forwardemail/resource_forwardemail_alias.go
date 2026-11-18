@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/smokeythemonkey/terraform-provider-forwardemail/internal/forwardemail"
@@ -67,11 +69,17 @@ func (aliasResource *aliasResource) Schema(_ context.Context, _ resource.SchemaR
 			},
 			"domain": schema.StringAttribute{
 				Required:    true,
-				Description: "Fully qualified domain name (FQDN).",
+				Description: "Fully qualified domain name (FQDN). Changing this forces a new resource.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"name": schema.StringAttribute{
 				Required:    true,
-				Description: "Alias name.",
+				Description: "Alias name. Changing this forces a new resource.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"enabled": schema.BoolAttribute{
 				Optional:    true,

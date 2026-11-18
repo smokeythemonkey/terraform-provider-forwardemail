@@ -100,3 +100,10 @@ PRs are welcome! We follow the typical "fork-and-pull" Git workflow.
 <a href="https://github.com/smokeythemonkey/terraform-provider-forwardemail/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=smokeythemonkey/terraform-provider-forwardemail&max=24" />
 </a>
+
+## AI Disclosure
+
+AI is used in this project in various capacities depending on my available time and mood.
+
+I.e. migration from terraform-plugin-v2 to terraform-plugin-framework was 90% handrolled,
+the vendoring of the forwardemail-api-go and its extensions/fixes was mostly AI with some reading/reviewing on my part.

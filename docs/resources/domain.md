@@ -17,7 +17,7 @@ A resource to create Forward Email domains.
 
 ### Required
 
-- `name` (String) Fully qualified domain name (FQDN) or IP address.
+- `name` (String) Fully qualified domain name (FQDN) or IP address. Changing this forces a new resource; note that destroying the old domain requires the provider attribute allow_domain_deletion = true.
 
 ### Optional
 
