@@ -103,10 +103,7 @@ type AliasParameters struct {
 
 // GetAliases retrieves all email aliases for the specified domain.
 func (c *Client) GetAliases(ctx context.Context, domain string) ([]Alias, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(domain) == "" {
@@ -135,10 +132,7 @@ func (c *Client) GetAliases(ctx context.Context, domain string) ([]Alias, error)
 
 // GetAlias retrieves a specific email alias by name for the specified domain.
 func (c *Client) GetAlias(ctx context.Context, domain, alias string) (*Alias, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(domain) == "" {
@@ -171,10 +165,7 @@ func (c *Client) GetAlias(ctx context.Context, domain, alias string) (*Alias, er
 
 // CreateAlias creates a new email alias for the specified domain with the given parameters.
 func (c *Client) CreateAlias(ctx context.Context, domain, alias string, parameters AliasParameters) (*Alias, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(domain) == "" {
@@ -212,10 +203,7 @@ func (c *Client) CreateAlias(ctx context.Context, domain, alias string, paramete
 
 // UpdateAlias updates an existing email alias with new parameters for the specified domain.
 func (c *Client) UpdateAlias(ctx context.Context, domain, alias string, parameters AliasParameters) (*Alias, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(domain) == "" {
@@ -301,10 +289,7 @@ func encodeAliasParams(params url.Values, parameters AliasParameters) {
 
 // DeleteAlias removes an email alias from the specified domain.
 func (c *Client) DeleteAlias(ctx context.Context, domain, alias string) error {
-	if ctx == nil {
-		return ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return err
 	}
 	if strings.TrimSpace(domain) == "" {

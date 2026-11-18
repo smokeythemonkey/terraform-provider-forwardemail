@@ -75,10 +75,7 @@ func (c *Client) validate() error {
 
 // validateRequest validates the request parameters and client state.
 func (c *Client) validateRequest(ctx context.Context, method, path string) error {
-	if ctx == nil {
-		return ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return err
 	}
 	if method == "" {
@@ -88,6 +85,15 @@ func (c *Client) validateRequest(ctx context.Context, method, path string) error
 		return ErrEmptyPath
 	}
 	return nil
+}
+
+// validateContext is the shared preflight every API method runs: reject a
+// nil or already-cancelled context before doing any work.
+func validateContext(ctx context.Context) error {
+	if ctx == nil {
+		return ErrNilContext
+	}
+	return ctx.Err()
 }
 
 func (c *Client) newRequest(ctx context.Context, method, path string, body io.Reader) (*http.Request, error) {

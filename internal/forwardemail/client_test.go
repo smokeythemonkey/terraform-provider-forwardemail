@@ -38,6 +38,24 @@ func TestNewTestClientFailsCleanlyOnError(t *testing.T) {
 	_, _ = c.GetAccount(context.Background())
 }
 
+// validateContext is the single preflight all API methods run; it must keep
+// rejecting nil and cancelled contexts exactly as the old per-method copies did.
+func TestValidateContext(t *testing.T) {
+	if err := validateContext(nil); !errors.Is(err, ErrNilContext) { //nolint:staticcheck // intentionally testing nil-context handling
+		t.Errorf("validateContext(nil) = %v, want ErrNilContext", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := validateContext(ctx); !errors.Is(err, context.Canceled) {
+		t.Errorf("validateContext(cancelled) = %v, want context.Canceled", err)
+	}
+
+	if err := validateContext(context.Background()); err != nil {
+		t.Errorf("validateContext(background) = %v, want nil", err)
+	}
+}
+
 func TestNewClient(t *testing.T) {
 	tests := []struct {
 		name      string

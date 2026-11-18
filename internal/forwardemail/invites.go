@@ -24,10 +24,7 @@ type Invite struct {
 
 // CreateDomainInvite sends an invitation to a user to join a domain with the specified group permissions.
 func (c *Client) CreateDomainInvite(ctx context.Context, domain, email, group string) (*Invite, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(domain) == "" {

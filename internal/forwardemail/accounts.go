@@ -29,10 +29,7 @@ type Account struct {
 
 // GetAccount retrieves the authenticated user's account information from the Forward Email API.
 func (c *Client) GetAccount(ctx context.Context) (*Account, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 

@@ -47,10 +47,7 @@ type DomainParameters struct {
 
 // GetDomains retrieves all domains associated with the authenticated account.
 func (c *Client) GetDomains(ctx context.Context) ([]Domain, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -74,10 +71,7 @@ func (c *Client) GetDomains(ctx context.Context) ([]Domain, error) {
 
 // GetDomain retrieves a specific domain by name.
 func (c *Client) GetDomain(ctx context.Context, name string) (*Domain, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(name) == "" {
@@ -106,10 +100,7 @@ func (c *Client) GetDomain(ctx context.Context, name string) (*Domain, error) {
 
 // CreateDomain adds a new domain to the account with the specified configuration parameters.
 func (c *Client) CreateDomain(ctx context.Context, name string, parameters DomainParameters) (*Domain, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(name) == "" {
@@ -145,10 +136,7 @@ func (c *Client) CreateDomain(ctx context.Context, name string, parameters Domai
 
 // UpdateDomain modifies an existing domain's configuration parameters.
 func (c *Client) UpdateDomain(ctx context.Context, name string, parameters DomainParameters) (*Domain, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(name) == "" {
@@ -185,10 +173,7 @@ func (c *Client) UpdateDomain(ctx context.Context, name string, parameters Domai
 
 // DeleteDomain removes a domain from the account.
 func (c *Client) DeleteDomain(ctx context.Context, name string) error {
-	if ctx == nil {
-		return ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return err
 	}
 	if strings.TrimSpace(name) == "" {

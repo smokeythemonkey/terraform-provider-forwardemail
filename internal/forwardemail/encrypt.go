@@ -20,10 +20,7 @@ type EncryptionResponse struct {
 
 // EncryptRecord allows you to encrypt a TXT record value so that you can safely add it to your DNS without exposing the value in plaintext.
 func (c *Client) EncryptRecord(ctx context.Context, input string) (*EncryptionResponse, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
-	if err := ctx.Err(); err != nil {
+	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
 
