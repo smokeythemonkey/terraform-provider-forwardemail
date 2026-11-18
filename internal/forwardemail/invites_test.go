@@ -46,8 +46,8 @@ func TestClient_CreateDomainInvite(t *testing.T) {
 				Group:     "admin",
 				ID:        "12345",
 				Object:    "invite",
-				CreatedAt: parseTime("2024-12-10T18:14:31.378Z"),
-				UpdatedAt: parseTime("2024-12-10T18:14:31.378Z"),
+				CreatedAt: parseTime(t, "2024-12-10T18:14:31.378Z"),
+				UpdatedAt: parseTime(t, "2024-12-10T18:14:31.378Z"),
 			},
 		},
 	}
