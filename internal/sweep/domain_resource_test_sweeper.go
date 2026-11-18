@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-// SweepDomains will delete all domains starting with "tf-acc".
+// SweepDomains deletes domains left behind by acceptance tests.
 func SweepDomains(name string) *resource.Sweeper {
 	return &resource.Sweeper{
 		Name: name,
@@ -34,9 +34,8 @@ func SweepDomains(name string) *resource.Sweeper {
 				return fmt.Errorf("error getting domains: %w", err)
 			}
 
-			prefix := "tfacc"
 			for _, domain := range domains {
-				if strings.HasPrefix(domain.Name, prefix) {
+				if isSweepable(domain.Name) {
 					log.Printf("[INFO] Deleting domain: %s", domain.Name)
 					err := client.DeleteDomain(context.Background(), domain.Name)
 					if err != nil {
@@ -48,4 +47,13 @@ func SweepDomains(name string) *resource.Sweeper {
 			return nil
 		},
 	}
+}
+
+// isSweepable reports whether a domain name belongs to an acceptance test
+// run and may be deleted: the tfacc/tf-acc prefixes used by older fixtures
+// plus the fixed domain the current fixtures create.
+func isSweepable(name string) bool {
+	return strings.HasPrefix(name, "tfacc") ||
+		strings.HasPrefix(name, "tf-acc") ||
+		name == "forwardemailprovider.com"
 }
