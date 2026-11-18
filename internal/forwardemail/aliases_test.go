@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -539,6 +540,59 @@ func TestClient_DeleteAlias(t *testing.T) {
 
 func pointSliceOfStrings(s []string) *[]string {
 	return &s
+}
+
+// The alias PUT endpoint resets absent fields, so UpdateAlias must encode
+// only the parameters it is given: unset (nil/empty) fields must not appear
+// in the form body.
+func TestClient_UpdateAliasSendsOnlyProvidedParameters(t *testing.T) {
+	var gotForm url.Values
+
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		if err := r.ParseForm(); err != nil {
+			t.Errorf("ParseForm: %v", err)
+		}
+		gotForm = r.PostForm
+		fmt.Fprint(w, `{"name":"tony","domain":{"name":"stark.com"}}`)
+	}))
+	defer svr.Close()
+
+	c, err := NewClient("test-key", WithAPIURL(svr.URL))
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+
+	params := AliasParameters{IsEnabled: pointBool(false)}
+	if _, err := c.UpdateAlias(context.Background(), "stark.com", "tony", params); err != nil {
+		t.Fatalf("UpdateAlias: %v", err)
+	}
+
+	if got := gotForm.Get("is_enabled"); got != "false" {
+		t.Errorf("is_enabled = %q, want %q", got, "false")
+	}
+	for _, key := range []string{
+		"description",
+		"public_key",
+		"smime_certificate",
+		"max_quota",
+		"has_recipient_verification",
+		"has_imap",
+		"has_pgp",
+		"has_smime",
+		"has_wkd_disabled",
+		"error_code_if_disabled",
+		"retention",
+		"smtp_limit",
+		"recipients[]",
+		"labels[]",
+	} {
+		if gotForm.Has(key) {
+			t.Errorf("form must not contain unset %q; got %v", key, gotForm)
+		}
+	}
 }
 
 func pointInt64(v int64) *int64 {

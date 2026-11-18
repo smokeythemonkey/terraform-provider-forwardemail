@@ -294,6 +294,61 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
+// changedAliasParams builds the API parameters for an update from only the
+// attributes that differ between plan and state. The Forward Email alias
+// API resets any absent field (description, labels, recipients) on PUT, so
+// only the attributes that actually changed may be sent; sending everything
+// would let the API clobber fields the user never configured.
+func changedAliasParams(plan, state AliasModel, recipients, labels []string) forwardemail.AliasParameters {
+	params := forwardemail.AliasParameters{}
+	if changed(plan.RecipientVerification, state.RecipientVerification) {
+		params.HasRecipientVerification = plan.RecipientVerification.ValueBoolPointer()
+	}
+	if changed(plan.Enabled, state.Enabled) {
+		params.IsEnabled = plan.Enabled.ValueBoolPointer()
+	}
+	if changed(plan.HasIMAP, state.HasIMAP) {
+		params.HasIMAP = plan.HasIMAP.ValueBoolPointer()
+	}
+	if changed(plan.HasPGP, state.HasPGP) {
+		params.HasPGP = plan.HasPGP.ValueBoolPointer()
+	}
+	if changed(plan.PublicKey, state.PublicKey) {
+		params.PublicKey = plan.PublicKey.ValueString()
+	}
+	if changed(plan.HasSMIME, state.HasSMIME) {
+		params.HasSMIME = plan.HasSMIME.ValueBoolPointer()
+	}
+	if changed(plan.SMIMECertificate, state.SMIMECertificate) {
+		params.SMIMECertificate = plan.SMIMECertificate.ValueString()
+	}
+	if changed(plan.HasWKDDisabled, state.HasWKDDisabled) {
+		params.HasWKDDisabled = plan.HasWKDDisabled.ValueBoolPointer()
+	}
+	if changed(plan.ErrorCodeIfDisabled, state.ErrorCodeIfDisabled) {
+		params.ErrorCodeIfDisabled = plan.ErrorCodeIfDisabled.ValueInt64Pointer()
+	}
+	if changed(plan.MaxQuota, state.MaxQuota) {
+		params.MaxQuota = plan.MaxQuota.ValueString()
+	}
+	if changed(plan.Retention, state.Retention) {
+		params.Retention = plan.Retention.ValueInt64Pointer()
+	}
+	if changed(plan.SMTPLimit, state.SMTPLimit) {
+		params.SMTPLimit = plan.SMTPLimit.ValueInt64Pointer()
+	}
+	if changed(plan.Recipient, state.Recipient) {
+		params.Recipients = &recipients
+	}
+	if changed(plan.Labels, state.Labels) {
+		params.Labels = &labels
+	}
+	if changed(plan.Description, state.Description) {
+		params.Description = plan.Description.ValueString()
+	}
+	return params
+}
+
 func (aliasResource *aliasResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state AliasModel
 
@@ -310,26 +365,7 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	// N.B.: the Forward Email API does not behave correctly with partial
-	// updates, so instead of sending only the changed parameters we must
-	// send all of them.
-	params := forwardemail.AliasParameters{
-		HasRecipientVerification: plan.RecipientVerification.ValueBoolPointer(),
-		IsEnabled:                plan.Enabled.ValueBoolPointer(),
-		HasIMAP:                  plan.HasIMAP.ValueBoolPointer(),
-		HasPGP:                   plan.HasPGP.ValueBoolPointer(),
-		PublicKey:                plan.PublicKey.ValueString(),
-		HasSMIME:                 plan.HasSMIME.ValueBoolPointer(),
-		SMIMECertificate:         plan.SMIMECertificate.ValueString(),
-		HasWKDDisabled:           plan.HasWKDDisabled.ValueBoolPointer(),
-		ErrorCodeIfDisabled:      plan.ErrorCodeIfDisabled.ValueInt64Pointer(),
-		MaxQuota:                 plan.MaxQuota.ValueString(),
-		Retention:                plan.Retention.ValueInt64Pointer(),
-		SMTPLimit:                plan.SMTPLimit.ValueInt64Pointer(),
-		Recipients:               &recipients,
-		Labels:                   &labels,
-		Description:              plan.Description.ValueString(),
-	}
+	params := changedAliasParams(plan, state, recipients, labels)
 
 	alias, err := aliasResource.client.UpdateAlias(ctx, state.Domain.ValueString(), state.Name.ValueString(), params)
 	if err != nil {
