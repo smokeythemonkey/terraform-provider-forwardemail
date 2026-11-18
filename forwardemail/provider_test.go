@@ -44,19 +44,23 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
+// TestAccTests runs each acceptance suite as a named subtest in a fixed
+// order (a map would randomize it, making CI flakes unreproducible).
 func TestAccTests(t *testing.T) {
-	for name, c := range TestCases {
-		t.Helper()
-		t.Run(name, func(t *testing.T) {
-			resource.Test(t, c(t))
+	cases := []struct {
+		name string
+		fn   func(*testing.T) resource.TestCase
+	}{
+		{"account_data", testAccDataSourceForwardemailAccount},
+		{"domain", testAccDomainResource},
+		{"alias", testAccAliasResource},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resource.Test(t, tc.fn(t))
 		})
 	}
-}
-
-var TestCases = map[string]func(*testing.T) resource.TestCase{
-	"account_data": testAccDataSourceForwardemailAccount,
-	"domain":       testAccDomainResource,
-	"alias":        testAccAliasResource,
 }
 
 // testAccGetEnv is a small indirection to allow tests to stub environment access if needed.
