@@ -62,7 +62,7 @@ func TestClient_GetAccount(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.GetAccount(context.Background())
 			if diff := cmp.Diff(tt.want, got); diff != "" {

@@ -14,6 +14,30 @@ import (
 	"time"
 )
 
+// newTestClient builds a client against the test server and fails the test
+// cleanly if the constructor errors, instead of returning a nil client that
+// panics at the first call site.
+func newTestClient(t *testing.T, opts ...Option) *Client {
+	t.Helper()
+	c, err := NewClient("test-key", opts...)
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	return c
+}
+
+// A nil client returned alongside a swallowed constructor error must panic
+// at first use rather than fail the test with a clear message.
+func TestNewTestClientFailsCleanlyOnError(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected panic when using a nil client from a swallowed constructor error")
+		}
+	}()
+	c, _ := NewClient("", WithAPIURL("http://unused"))
+	_, _ = c.GetAccount(context.Background())
+}
+
 func TestNewClient(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -87,7 +111,7 @@ func TestNewClientAPIURLTrailingSlash(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	c, _ := NewClient("test-key", WithAPIURL(svr.URL+"/"))
+	c := newTestClient(t, WithAPIURL(svr.URL+"/"))
 
 	if _, err := c.GetAccount(context.Background()); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -121,7 +145,7 @@ func TestClient_ResponseTooLarge(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+	c := newTestClient(t, WithAPIURL(svr.URL))
 
 	_, err := c.GetDomain(context.Background(), "stark.com")
 	if !errors.Is(err, ErrResponseTooLarge) {
@@ -138,7 +162,7 @@ func TestClient_ResponseAtCapSucceeds(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+	c := newTestClient(t, WithAPIURL(svr.URL))
 
 	req, err := c.newRequest(context.Background(), http.MethodGet, "/v1/account", nil)
 	if err != nil {
@@ -164,7 +188,7 @@ func TestClient_ErrorBodyTruncated(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+	c := newTestClient(t, WithAPIURL(svr.URL))
 
 	_, err := c.GetDomain(context.Background(), "stark.com")
 	if err == nil {

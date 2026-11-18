@@ -78,7 +78,7 @@ func TestClient_GetDomain(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.GetDomain(context.Background(), tt.domain)
 			if diff := cmp.Diff(tt.want, got); diff != "" {
@@ -193,7 +193,7 @@ func TestClient_GetDomains(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.GetDomains(context.Background())
 			if diff := cmp.Diff(tt.want, got); diff != "" {
@@ -275,7 +275,7 @@ func TestClient_CreateDomain(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.CreateDomain(context.Background(), tt.domain, tt.parameters)
 			if diff := cmp.Diff(tt.want, got); diff != "" {
@@ -357,7 +357,7 @@ func TestClient_UpdateDomain(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.UpdateDomain(context.Background(), tt.domain, tt.parameters)
 			if diff := cmp.Diff(tt.want, got); diff != "" {
@@ -405,7 +405,7 @@ func TestClient_DeleteDomain(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got := c.DeleteDomain(context.Background(), tt.domain)
 			if tt.wantError {
@@ -436,7 +436,7 @@ func TestClient_CreateDomainTrimsNameBeforeSending(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+	c := newTestClient(t, WithAPIURL(svr.URL))
 
 	const padded = "  stark.com  "
 	if _, err := c.CreateDomain(context.Background(), padded, DomainParameters{}); err != nil {

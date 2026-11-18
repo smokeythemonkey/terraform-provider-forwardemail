@@ -65,7 +65,7 @@ func TestClient_CreateDomainInvite(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.CreateDomainInvite(context.Background(), tt.domain, tt.email, tt.group)
 			if diff := cmp.Diff(tt.want, got); diff != "" {

@@ -97,7 +97,7 @@ func TestClient_GetAlias(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.GetAlias(context.Background(), tt.req.domain, tt.req.alias)
 			if diff := cmp.Diff(tt.want, got); diff != "" {
@@ -233,7 +233,7 @@ func TestClient_GetAliases(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.GetAliases(context.Background(), tt.req.domain)
 			if diff := cmp.Diff(tt.want, got); diff != "" {
@@ -362,7 +362,7 @@ func TestClient_CreateAlias(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.CreateAlias(context.Background(), tt.req.domain, tt.req.alias, tt.req.params)
 			if diff := cmp.Diff(tt.want, got); diff != "" {
@@ -462,7 +462,7 @@ func TestClient_UpdateAlias(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.UpdateAlias(context.Background(), tt.req.domain, tt.req.alias, tt.req.params)
 			if diff := cmp.Diff(tt.want, got); diff != "" {
@@ -520,7 +520,7 @@ func TestClient_DeleteAlias(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got := c.DeleteAlias(context.Background(), tt.req.domain, tt.req.alias)
 			if tt.wantError {

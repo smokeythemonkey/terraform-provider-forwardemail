@@ -46,7 +46,7 @@ func TestClient_EncryptRecord(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+	c := newTestClient(t, WithAPIURL(svr.URL))
 
 	got, err := c.EncryptRecord(context.Background(), input)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestClient_EncryptRecord(t *testing.T) {
 }
 
 func TestClient_EncryptRecordMissingInput(t *testing.T) {
-	c, _ := NewClient("test-key")
+	c := newTestClient(t)
 
 	_, err := c.EncryptRecord(context.Background(), "")
 	if !errors.Is(err, ErrMissingEncryptionInput) {
@@ -88,7 +88,7 @@ func TestClient_EncryptRecordEscapesJSONInput(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+	c := newTestClient(t, WithAPIURL(svr.URL))
 
 	if _, err := c.EncryptRecord(context.Background(), input); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -102,7 +102,7 @@ func TestClient_EncryptRecordAPIErrorChain(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+	c := newTestClient(t, WithAPIURL(svr.URL))
 
 	_, err := c.EncryptRecord(context.Background(), "input")
 	if err == nil {
@@ -124,7 +124,7 @@ func TestClient_EncryptRecordParseErrorChain(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+	c := newTestClient(t, WithAPIURL(svr.URL))
 
 	_, err := c.EncryptRecord(context.Background(), "input")
 	if err == nil {
