@@ -55,6 +55,33 @@ type Alias struct {
 	UpdatedAt                time.Time  `json:"updated_at"`
 }
 
+// UnmarshalJSON tolerates the "user" field being serialized as a plain
+// string (the update-alias endpoint does this) while other endpoints send
+// an object.
+func (a *Alias) UnmarshalJSON(data []byte) error {
+	type aliasAlias Alias // avoid recursion
+	var raw struct {
+		aliasAlias
+		Account json.RawMessage `json:"user"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*a = Alias(raw.aliasAlias)
+	if len(raw.Account) > 0 && string(raw.Account) != "null" {
+		if raw.Account[0] == '"' {
+			var email string
+			if err := json.Unmarshal(raw.Account, &email); err != nil {
+				return fmt.Errorf("%w: user: %s", ErrUnsupportedJSONValue, raw.Account)
+			}
+			a.Account.Email = email
+		} else if err := json.Unmarshal(raw.Account, &a.Account); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // AliasParameters contains optional parameters for creating or updating an alias.
 type AliasParameters struct {
 	Recipients               *[]string

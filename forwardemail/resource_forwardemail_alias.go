@@ -2,8 +2,6 @@ package forwardemail
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -368,18 +366,8 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 
 	alias, err := aliasResource.client.UpdateAlias(ctx, state.Domain.ValueString(), state.Name.ValueString(), params)
 	if err != nil {
-		// The API's update-alias response serializes "user" as a string
-		// while the client models it as an object, so a successful (2xx)
-		// update can still fail response parsing. The update has been
-		// applied at that point, so fall back to reading the alias.
-		var parseErr *json.UnmarshalTypeError
-		if errors.As(err, &parseErr) {
-			alias, err = aliasResource.client.GetAlias(ctx, state.Domain.ValueString(), state.Name.ValueString())
-		}
-		if err != nil {
-			resp.Diagnostics.AddError("Failed to update alias", err.Error())
-			return
-		}
+		resp.Diagnostics.AddError("Failed to update alias", err.Error())
+		return
 	}
 
 	// Only identity fields come from the API; every planned value is kept

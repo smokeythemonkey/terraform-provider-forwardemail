@@ -542,6 +542,36 @@ func pointSliceOfStrings(s []string) *[]string {
 	return &s
 }
 
+// The update-alias endpoint serializes "user" as a string while other
+// endpoints send an object. UnmarshalJSON on Alias must tolerate both so a
+// successful update never fails response parsing.
+func TestClient_UpdateAliasToleratesStringUser(t *testing.T) {
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("method = %s, want PUT", r.Method)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"user":"tony@stark.com","domain":{"name":"stark.com"},"name":"tony","is_enabled":true}`)
+	}))
+	defer svr.Close()
+
+	c, err := NewClient("test-key", WithAPIURL(svr.URL))
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+
+	got, err := c.UpdateAlias(context.Background(), "stark.com", "tony", AliasParameters{IsEnabled: pointBool(true)})
+	if err != nil {
+		t.Fatalf("UpdateAlias with string user must not fail parsing: %v", err)
+	}
+	if got.Name != "tony" || got.Domain.Name != "stark.com" || !got.IsEnabled {
+		t.Errorf("unexpected alias: %+v", got)
+	}
+	if got.Account.Email != "tony@stark.com" {
+		t.Errorf("Account.Email = %q, want %q", got.Account.Email, "tony@stark.com")
+	}
+}
+
 // The alias PUT endpoint resets absent fields, so UpdateAlias must encode
 // only the parameters it is given: unset (nil/empty) fields must not appear
 // in the form body.
