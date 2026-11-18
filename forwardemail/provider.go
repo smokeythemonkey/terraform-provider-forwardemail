@@ -4,6 +4,7 @@ package forwardemail
 import (
 	"context"
 	"os"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -80,7 +81,7 @@ func (p *forwardemailProvider) Configure(ctx context.Context, req provider.Confi
 		return
 	}
 	if allowDomainDeletion.IsNull() {
-		allowDomainDeletion = types.BoolValue(os.Getenv("FORWARDEMAIL_ALLOW_DOMAIN_DELETION") == "true")
+		allowDomainDeletion = types.BoolValue(envBool("FORWARDEMAIL_ALLOW_DOMAIN_DELETION"))
 	}
 
 	client, err := forwardemail.NewClient(apiKey.ValueString())
@@ -93,6 +94,14 @@ func (p *forwardemailProvider) Configure(ctx context.Context, req provider.Confi
 	cfg := &providerConfig{client: client, allowDomainDeletion: allowDomainDeletion.ValueBool()}
 	resp.ResourceData = cfg
 	resp.DataSourceData = cfg
+}
+
+// envBool parses a boolean environment variable with the standard truthy
+// spellings (1, t, T, TRUE, true, True). Unparsable or empty values fail
+// closed (false), which is the safe direction for a destructive-action gate.
+func envBool(key string) bool {
+	v, err := strconv.ParseBool(os.Getenv(key))
+	return err == nil && v
 }
 
 func (p *forwardemailProvider) Resources(_ context.Context) []func() resource.Resource {

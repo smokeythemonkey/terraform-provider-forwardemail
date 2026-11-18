@@ -63,3 +63,54 @@ func TestProviderConfigureStopsOnConfigReadError(t *testing.T) {
 		t.Error("ResourceData must not be set when a config read failed")
 	}
 }
+
+// The deletion gate env var must accept the standard truthy spellings
+// (true/TRUE/1), not just lowercase "true", and fail closed (false) on
+// unparsable values.
+func TestEnvAllowDomainDeletionParsing(t *testing.T) {
+	tests := []struct {
+		value string
+		want  bool
+	}{
+		{"true", true},
+		{"TRUE", true},
+		{"True", true},
+		{"1", true},
+		{"false", false},
+		{"0", false},
+		{"garbage", false},
+		{"", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.value, func(t *testing.T) {
+			t.Setenv("FORWARDEMAIL_ALLOW_DOMAIN_DELETION", tt.value)
+			t.Setenv("FORWARDEMAIL_API_KEY", "test-key")
+
+			p := New("test")().(*forwardemailProvider)
+			schemaResp := &provider.SchemaResponse{}
+			p.Schema(context.Background(), provider.SchemaRequest{}, schemaResp)
+
+			config := tfsdk.Config{
+				Schema: schemaResp.Schema,
+				Raw: tftypes.NewValue(schemaResp.Schema.Type().TerraformType(context.Background()), map[string]tftypes.Value{
+					"api_key":               tftypes.NewValue(tftypes.String, nil),
+					"allow_domain_deletion": tftypes.NewValue(tftypes.Bool, nil),
+				}),
+			}
+
+			resp := &provider.ConfigureResponse{}
+			p.Configure(context.Background(), provider.ConfigureRequest{Config: config}, resp)
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("Configure diagnostics: %v", resp.Diagnostics)
+			}
+			cfg, ok := resp.ResourceData.(*providerConfig)
+			if !ok {
+				t.Fatal("ResourceData is not *providerConfig")
+			}
+			if cfg.allowDomainDeletion != tt.want {
+				t.Errorf("FORWARDEMAIL_ALLOW_DOMAIN_DELETION=%q -> allowDomainDeletion=%v, want %v", tt.value, cfg.allowDomainDeletion, tt.want)
+			}
+		})
+	}
+}
