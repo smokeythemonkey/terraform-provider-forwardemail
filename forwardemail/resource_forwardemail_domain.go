@@ -30,7 +30,7 @@ func NewDomainResource() resource.Resource {
 }
 
 type DomainModel struct {
-	Id                     types.String `tfsdk:"id"`
+	ID                     types.String `tfsdk:"id"`
 	Name                   types.String `tfsdk:"name"`
 	AdultContentProtection types.Bool   `tfsdk:"adult_content_protection"`
 	PhishingProtection     types.Bool   `tfsdk:"phishing_protection"`
@@ -128,7 +128,7 @@ func (domainResource *domainResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	plan.Id = types.StringValue(domain.Name)
+	plan.ID = types.StringValue(domain.Name)
 	plan.Name = types.StringValue(domain.Name)
 	plan.AdultContentProtection = types.BoolValue(domain.HasAdultContentProtection)
 	plan.PhishingProtection = types.BoolValue(domain.HasPhishingProtection)
@@ -147,7 +147,7 @@ func (domainResource *domainResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	domain, err := domainResource.client.GetDomain(ctx, state.Id.ValueString())
+	domain, err := domainResource.client.GetDomain(ctx, state.ID.ValueString())
 	if err != nil {
 		if forwardemail.IsStatus(err, http.StatusNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -159,7 +159,7 @@ func (domainResource *domainResource) Read(ctx context.Context, req resource.Rea
 
 	// The API returns an opaque ID in domain.ID, but every client call is
 	// keyed by the domain name, so the name is the resource's Terraform ID.
-	state.Id = types.StringValue(domain.Name)
+	state.ID = types.StringValue(domain.Name)
 	state.Name = types.StringValue(domain.Name)
 	state.AdultContentProtection = types.BoolValue(domain.HasAdultContentProtection)
 	state.PhishingProtection = types.BoolValue(domain.HasPhishingProtection)
@@ -197,7 +197,7 @@ func (domainResource *domainResource) Update(ctx context.Context, req resource.U
 		params.HasRecipientVerification = plan.RecipientVerification.ValueBoolPointer()
 	}
 
-	domain, err := domainResource.client.UpdateDomain(ctx, state.Id.ValueString(), params)
+	domain, err := domainResource.client.UpdateDomain(ctx, state.ID.ValueString(), params)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to update domain", err.Error())
 		return
@@ -205,7 +205,7 @@ func (domainResource *domainResource) Update(ctx context.Context, req resource.U
 
 	// Computed attributes (id) are unknown in the plan during update, so
 	// every value must be set from the API response before saving state.
-	plan.Id = types.StringValue(domain.Name)
+	plan.ID = types.StringValue(domain.Name)
 	plan.Name = types.StringValue(domain.Name)
 	plan.AdultContentProtection = types.BoolValue(domain.HasAdultContentProtection)
 	plan.PhishingProtection = types.BoolValue(domain.HasPhishingProtection)
@@ -227,12 +227,12 @@ func (domainResource *domainResource) Delete(ctx context.Context, req resource.D
 	if !domainResource.allowDeletion {
 		resp.Diagnostics.AddError(
 			"Domain deletion refused",
-			fmt.Sprintf("Deleting domain %q is destructive and irreversible. Set the provider attribute allow_domain_deletion = true (or FORWARDEMAIL_ALLOW_DOMAIN_DELETION=true) to allow it.", state.Id.ValueString()),
+			fmt.Sprintf("Deleting domain %q is destructive and irreversible. Set the provider attribute allow_domain_deletion = true (or FORWARDEMAIL_ALLOW_DOMAIN_DELETION=true) to allow it.", state.ID.ValueString()),
 		)
 		return
 	}
 
-	name := state.Id.ValueString()
+	name := state.ID.ValueString()
 	err := domainResource.client.DeleteDomain(ctx, name)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to delete Domain", err.Error())

@@ -33,7 +33,7 @@ func NewAliasResource() resource.Resource {
 }
 
 type AliasModel struct {
-	Id                    types.String `tfsdk:"id"`
+	ID                    types.String `tfsdk:"id"`
 	Domain                types.String `tfsdk:"domain"`
 	Name                  types.String `tfsdk:"name"`
 	Enabled               types.Bool   `tfsdk:"enabled"`
@@ -48,7 +48,7 @@ type AliasModel struct {
 	MaxQuota              types.String `tfsdk:"max_quota"`
 	Retention             types.Int64  `tfsdk:"retention"`
 	SMTPLimit             types.Int64  `tfsdk:"smtp_limit"`
-	Recipient             types.List   `tfsdk:"recipients"`
+	Recipients            types.List   `tfsdk:"recipients"`
 	Description           types.String `tfsdk:"description"`
 	Labels                types.List   `tfsdk:"labels"`
 }
@@ -186,7 +186,7 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	var recipients, labels []string
-	resp.Diagnostics.Append(plan.Recipient.ElementsAs(ctx, &recipients, false)...)
+	resp.Diagnostics.Append(plan.Recipients.ElementsAs(ctx, &recipients, false)...)
 	resp.Diagnostics.Append(plan.Labels.ElementsAs(ctx, &labels, false)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -219,7 +219,7 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 	// The API returns an opaque ID in alias.ID, but every client call is
 	// keyed by the (domain, name) pair, so the name is the resource's
 	// Terraform ID.
-	plan.Id = types.StringValue(alias.Name)
+	plan.ID = types.StringValue(alias.Name)
 	plan.Domain = types.StringValue(alias.Domain.Name)
 	plan.Name = types.StringValue(alias.Name)
 	// Echoed attributes are materialized from the API response (they are
@@ -240,7 +240,7 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 
 	recipientsList, diags := types.ListValueFrom(ctx, types.StringType, alias.Recipients)
 	resp.Diagnostics.Append(diags...)
-	plan.Recipient = recipientsList
+	plan.Recipients = recipientsList
 
 	labelsList, diags := types.ListValueFrom(ctx, types.StringType, alias.Labels)
 	resp.Diagnostics.Append(diags...)
@@ -271,7 +271,7 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	state.Id = types.StringValue(alias.Name)
+	state.ID = types.StringValue(alias.Name)
 	state.Domain = types.StringValue(alias.Domain.Name)
 	state.Name = types.StringValue(alias.Name)
 	// Echoed attributes refresh from the API so out-of-band drift is
@@ -290,7 +290,7 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 
 	recipientsList, diags := types.ListValueFrom(ctx, types.StringType, alias.Recipients)
 	resp.Diagnostics.Append(diags...)
-	state.Recipient = recipientsList
+	state.Recipients = recipientsList
 
 	labelsList, diags := types.ListValueFrom(ctx, types.StringType, alias.Labels)
 	resp.Diagnostics.Append(diags...)
@@ -342,7 +342,7 @@ func changedAliasParams(plan, state AliasModel, recipients, labels []string) for
 	if changed(plan.SMTPLimit, state.SMTPLimit) {
 		params.SMTPLimit = plan.SMTPLimit.ValueInt64Pointer()
 	}
-	if changed(plan.Recipient, state.Recipient) {
+	if changed(plan.Recipients, state.Recipients) {
 		params.Recipients = &recipients
 	}
 	if changed(plan.Labels, state.Labels) {
@@ -364,7 +364,7 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	var recipients, labels []string
-	resp.Diagnostics.Append(plan.Recipient.ElementsAs(ctx, &recipients, false)...)
+	resp.Diagnostics.Append(plan.Recipients.ElementsAs(ctx, &recipients, false)...)
 	resp.Diagnostics.Append(plan.Labels.ElementsAs(ctx, &labels, false)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -381,7 +381,7 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 	// Only identity fields come from the API; every planned value is kept
 	// so Terraform does not report an inconsistent result when the API
 	// normalizes or does not echo a parameter back.
-	plan.Id = types.StringValue(alias.Name)
+	plan.ID = types.StringValue(alias.Name)
 	plan.Domain = types.StringValue(alias.Domain.Name)
 	plan.Name = types.StringValue(alias.Name)
 

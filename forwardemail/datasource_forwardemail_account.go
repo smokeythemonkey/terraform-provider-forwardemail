@@ -23,7 +23,7 @@ func NewAccountDataSource() datasource.DataSource {
 }
 
 type AccountModel struct {
-	Id          types.String `tfsdk:"id"`
+	ID          types.String `tfsdk:"id"`
 	Plan        types.String `tfsdk:"plan"`
 	Email       types.String `tfsdk:"email"`
 	FullEmail   types.String `tfsdk:"full_email"`
@@ -93,7 +93,7 @@ func (accountSource *accountDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
-	data.Id = types.StringValue(account.ID)
+	data.ID = types.StringValue(account.ID)
 	data.Plan = types.StringValue(account.Plan)
 	data.Email = types.StringValue(account.Email)
 	data.FullEmail = types.StringValue(account.FullEmail)
