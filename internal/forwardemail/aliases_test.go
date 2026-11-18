@@ -320,17 +320,17 @@ func TestClient_CreateAlias(t *testing.T) {
 				params: AliasParameters{
 					Recipients:               pointSliceOfStrings([]string{"james@rhodes.com"}),
 					Labels:                   pointSliceOfStrings([]string{"catch-all"}),
-					Description:              "main email",
+					Description:              pointString("main email"),
 					IsEnabled:                pointBool(true),
 					HasRecipientVerification: pointBool(true),
 					HasIMAP:                  pointBool(true),
 					HasPGP:                   pointBool(true),
-					PublicKey:                "-----BEGIN PGP PUBLIC KEY BLOCK-----",
+					PublicKey:                pointString("-----BEGIN PGP PUBLIC KEY BLOCK-----"),
 					HasSMIME:                 pointBool(true),
-					SMIMECertificate:         "-----BEGIN CERTIFICATE-----",
+					SMIMECertificate:         pointString("-----BEGIN CERTIFICATE-----"),
 					HasWKDDisabled:           pointBool(true),
 					ErrorCodeIfDisabled:      pointInt64(250),
-					MaxQuota:                 "1 GB",
+					MaxQuota:                 pointString("1 GB"),
 					Retention:                pointInt64(30),
 					SMTPLimit:                pointInt64(100),
 				},
@@ -460,7 +460,7 @@ func TestClient_UpdateAlias(t *testing.T) {
 				params: AliasParameters{
 					Recipients:               pointSliceOfStrings([]string{"james@rhodes.com"}),
 					Labels:                   pointSliceOfStrings([]string{"catch-all", "friends"}),
-					Description:              "main email",
+					Description:              pointString("main email"),
 					IsEnabled:                pointBool(true),
 					HasRecipientVerification: pointBool(true),
 				},
@@ -610,6 +610,35 @@ func TestClient_DeleteAlias(t *testing.T) {
 
 func pointSliceOfStrings(s []string) *[]string {
 	return &s
+}
+
+func pointString(s string) *string {
+	return &s
+}
+
+// String parameters are pointers so an explicit empty string (clearing the
+// field) is distinguishable from unset (field omitted from the form body).
+func TestEncodeAliasParamsDistinguishesUnsetFromClear(t *testing.T) {
+	unset := url.Values{}
+	encodeAliasParams(unset, AliasParameters{})
+	for _, key := range []string{"description", "public_key", "smime_certificate", "max_quota"} {
+		if unset.Has(key) {
+			t.Errorf("unset %q must be omitted, got %v", key, unset)
+		}
+	}
+
+	cleared := url.Values{}
+	encodeAliasParams(cleared, AliasParameters{
+		Description:      pointString(""),
+		PublicKey:        pointString(""),
+		SMIMECertificate: pointString(""),
+		MaxQuota:         pointString(""),
+	})
+	for _, key := range []string{"description", "public_key", "smime_certificate", "max_quota"} {
+		if !cleared.Has(key) {
+			t.Errorf("explicit empty %q must be sent (to clear it), got %v", key, cleared)
+		}
+	}
 }
 
 // The update-alias endpoint serializes "user" as a string while other

@@ -189,17 +189,17 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 		IsEnabled:                plan.Enabled.ValueBoolPointer(),
 		HasIMAP:                  plan.HasIMAP.ValueBoolPointer(),
 		HasPGP:                   plan.HasPGP.ValueBoolPointer(),
-		PublicKey:                plan.PublicKey.ValueString(),
+		PublicKey:                plan.PublicKey.ValueStringPointer(),
 		HasSMIME:                 plan.HasSMIME.ValueBoolPointer(),
-		SMIMECertificate:         plan.SMIMECertificate.ValueString(),
+		SMIMECertificate:         plan.SMIMECertificate.ValueStringPointer(),
 		HasWKDDisabled:           plan.HasWKDDisabled.ValueBoolPointer(),
 		ErrorCodeIfDisabled:      plan.ErrorCodeIfDisabled.ValueInt64Pointer(),
-		MaxQuota:                 plan.MaxQuota.ValueString(),
+		MaxQuota:                 plan.MaxQuota.ValueStringPointer(),
 		Retention:                plan.Retention.ValueInt64Pointer(),
 		SMTPLimit:                plan.SMTPLimit.ValueInt64Pointer(),
 		Recipients:               &recipients,
 		Labels:                   &labels,
-		Description:              plan.Description.ValueString(),
+		Description:              plan.Description.ValueStringPointer(),
 	}
 
 	alias, err := aliasResource.client.CreateAlias(ctx, plan.Domain.ValueString(), plan.Name.ValueString(), params)
@@ -311,13 +311,13 @@ func changedAliasParams(plan, state AliasModel, recipients, labels []string) for
 		params.HasPGP = plan.HasPGP.ValueBoolPointer()
 	}
 	if changed(plan.PublicKey, state.PublicKey) {
-		params.PublicKey = plan.PublicKey.ValueString()
+		params.PublicKey = plan.PublicKey.ValueStringPointer()
 	}
 	if changed(plan.HasSMIME, state.HasSMIME) {
 		params.HasSMIME = plan.HasSMIME.ValueBoolPointer()
 	}
 	if changed(plan.SMIMECertificate, state.SMIMECertificate) {
-		params.SMIMECertificate = plan.SMIMECertificate.ValueString()
+		params.SMIMECertificate = plan.SMIMECertificate.ValueStringPointer()
 	}
 	if changed(plan.HasWKDDisabled, state.HasWKDDisabled) {
 		params.HasWKDDisabled = plan.HasWKDDisabled.ValueBoolPointer()
@@ -326,7 +326,7 @@ func changedAliasParams(plan, state AliasModel, recipients, labels []string) for
 		params.ErrorCodeIfDisabled = plan.ErrorCodeIfDisabled.ValueInt64Pointer()
 	}
 	if changed(plan.MaxQuota, state.MaxQuota) {
-		params.MaxQuota = plan.MaxQuota.ValueString()
+		params.MaxQuota = plan.MaxQuota.ValueStringPointer()
 	}
 	if changed(plan.Retention, state.Retention) {
 		params.Retention = plan.Retention.ValueInt64Pointer()
@@ -341,7 +341,7 @@ func changedAliasParams(plan, state AliasModel, recipients, labels []string) for
 		params.Labels = &labels
 	}
 	if changed(plan.Description, state.Description) {
-		params.Description = plan.Description.ValueString()
+		params.Description = plan.Description.ValueStringPointer()
 	}
 	return params
 }

@@ -86,17 +86,17 @@ func (a *Alias) UnmarshalJSON(data []byte) error {
 type AliasParameters struct {
 	Recipients               *[]string
 	Labels                   *[]string
-	Description              string
+	Description              *string
 	HasRecipientVerification *bool
 	IsEnabled                *bool
 	ErrorCodeIfDisabled      *int64
 	HasIMAP                  *bool
 	HasPGP                   *bool
-	PublicKey                string
+	PublicKey                *string
 	HasSMIME                 *bool
-	SMIMECertificate         string
+	SMIMECertificate         *string
 	HasWKDDisabled           *bool
-	MaxQuota                 string
+	MaxQuota                 *string
 	Retention                *int64
 	SMTPLimit                *int64
 }
@@ -241,14 +241,14 @@ func (c *Client) UpdateAlias(ctx context.Context, domain, alias string, paramete
 }
 
 func encodeAliasParams(params url.Values, parameters AliasParameters) {
-	for k, v := range map[string]string{
+	for k, v := range map[string]*string{
 		"description":       parameters.Description,
 		"public_key":        parameters.PublicKey,
 		"smime_certificate": parameters.SMIMECertificate,
 		"max_quota":         parameters.MaxQuota,
 	} {
-		if v != "" {
-			params.Add(k, v)
+		if v != nil {
+			params.Add(k, *v)
 		}
 	}
 
