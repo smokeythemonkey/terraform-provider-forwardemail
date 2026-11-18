@@ -17,13 +17,15 @@ import (
 func TestClient_GetDomain(t *testing.T) {
 	tests := []struct {
 		name     string
+		wantErr  bool
 		domain   string
 		response string
 		want     *Domain
 	}{
 		{
-			name:   "no data",
-			domain: "stark.com",
+			name:    "no data",
+			wantErr: true,
+			domain:  "stark.com",
 		},
 		{
 			name:   "ok",
@@ -80,7 +82,16 @@ func TestClient_GetDomain(t *testing.T) {
 
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
-			got, _ := c.GetDomain(context.Background(), tt.domain)
+			got, err := c.GetDomain(context.Background(), tt.domain)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected parse error for empty body, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Fatalf("values are not the same %s", diff)
 			}
@@ -91,11 +102,13 @@ func TestClient_GetDomain(t *testing.T) {
 func TestClient_GetDomains(t *testing.T) {
 	tests := []struct {
 		name     string
+		wantErr  bool
 		response string
 		want     []Domain
 	}{
 		{
-			name: "no data",
+			name:    "no data",
+			wantErr: true,
 		},
 		{
 			name: "ok",
@@ -195,7 +208,16 @@ func TestClient_GetDomains(t *testing.T) {
 
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
-			got, _ := c.GetDomains(context.Background())
+			got, err := c.GetDomains(context.Background())
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected parse error for empty body, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Fatalf("values are not the same %s", diff)
 			}
@@ -206,14 +228,16 @@ func TestClient_GetDomains(t *testing.T) {
 func TestClient_CreateDomain(t *testing.T) {
 	tests := []struct {
 		name       string
+		wantErr    bool
 		domain     string
 		parameters DomainParameters
 		response   string
 		want       *Domain
 	}{
 		{
-			name:   "no data",
-			domain: "stark.com",
+			name:    "no data",
+			wantErr: true,
+			domain:  "stark.com",
 		},
 		{
 			name:   "ok",
@@ -277,7 +301,16 @@ func TestClient_CreateDomain(t *testing.T) {
 
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
-			got, _ := c.CreateDomain(context.Background(), tt.domain, tt.parameters)
+			got, err := c.CreateDomain(context.Background(), tt.domain, tt.parameters)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected parse error for empty body, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Fatalf("values are not the same %s", diff)
 			}
@@ -288,14 +321,16 @@ func TestClient_CreateDomain(t *testing.T) {
 func TestClient_UpdateDomain(t *testing.T) {
 	tests := []struct {
 		name       string
+		wantErr    bool
 		domain     string
 		parameters DomainParameters
 		response   string
 		want       *Domain
 	}{
 		{
-			name:   "no data",
-			domain: "stark.com",
+			name:    "no data",
+			wantErr: true,
+			domain:  "stark.com",
 		},
 		{
 			name:   "ok",
@@ -359,7 +394,16 @@ func TestClient_UpdateDomain(t *testing.T) {
 
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
-			got, _ := c.UpdateDomain(context.Background(), tt.domain, tt.parameters)
+			got, err := c.UpdateDomain(context.Background(), tt.domain, tt.parameters)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected parse error for empty body, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Fatalf("values are not the same %s", diff)
 			}

@@ -17,11 +17,13 @@ import (
 func TestClient_GetAccount(t *testing.T) {
 	tests := []struct {
 		name     string
+		wantErr  bool
 		response string
 		want     *Account
 	}{
 		{
-			name: "no data",
+			name:    "no data",
+			wantErr: true,
 		},
 		{
 			name: "ok",
@@ -64,7 +66,16 @@ func TestClient_GetAccount(t *testing.T) {
 
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
-			got, _ := c.GetAccount(context.Background())
+			got, err := c.GetAccount(context.Background())
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected parse error for empty body, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Fatalf("values are not the same %s", diff)
 			}

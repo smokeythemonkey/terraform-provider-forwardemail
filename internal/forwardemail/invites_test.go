@@ -16,6 +16,7 @@ import (
 func TestClient_CreateDomainInvite(t *testing.T) {
 	tests := []struct {
 		name     string
+		wantErr  bool
 		domain   string
 		email    string
 		group    string
@@ -23,10 +24,11 @@ func TestClient_CreateDomainInvite(t *testing.T) {
 		want     *Invite
 	}{
 		{
-			name:   "no data",
-			domain: "stark.com",
-			email:  "tony@stark.com",
-			group:  "admin",
+			name:    "no data",
+			wantErr: true,
+			domain:  "stark.com",
+			email:   "tony@stark.com",
+			group:   "admin",
 		},
 		{
 			name:   "ok",
@@ -64,7 +66,16 @@ func TestClient_CreateDomainInvite(t *testing.T) {
 
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
-			got, _ := c.CreateDomainInvite(context.Background(), tt.domain, tt.email, tt.group)
+			got, err := c.CreateDomainInvite(context.Background(), tt.domain, tt.email, tt.group)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected parse error for empty body, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if gotMethod != http.MethodPost {
 				t.Errorf("method = %s, want POST", gotMethod)
 			}

@@ -15,6 +15,31 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+// The "no data" table cases must fail loudly: an empty response body is a
+// parse error from the client, and the old `got, _ :=` swallowed it, making
+// cmp.Diff(nil, nil) pass while proving nothing about the case.
+func TestNoDataCasesDoNotSwallowErrors(t *testing.T) {
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		fmt.Fprint(w, "")
+	}))
+	defer svr.Close()
+
+	c := newTestClient(t, WithAPIURL(svr.URL))
+
+	if _, err := c.GetAlias(context.Background(), "stark.com", "tony"); err == nil {
+		t.Error("GetAlias with empty body must return a parse error, got nil (old `got, _ :=` swallowed it)")
+	}
+	if _, err := c.GetAliases(context.Background(), "stark.com"); err == nil {
+		t.Error("GetAliases with empty body must return a parse error, got nil")
+	}
+	if _, err := c.CreateAlias(context.Background(), "stark.com", "tony", AliasParameters{}); err == nil {
+		t.Error("CreateAlias with empty body must return a parse error, got nil")
+	}
+	if _, err := c.UpdateAlias(context.Background(), "stark.com", "tony", AliasParameters{}); err == nil {
+		t.Error("UpdateAlias with empty body must return a parse error, got nil")
+	}
+}
+
 func TestClient_GetAlias(t *testing.T) {
 	type request struct {
 		domain string
@@ -23,13 +48,15 @@ func TestClient_GetAlias(t *testing.T) {
 
 	tests := []struct {
 		name     string
+		wantErr  bool
 		req      request
 		domain   string
 		response string
 		want     *Alias
 	}{
 		{
-			name: "no data",
+			name:    "no data",
+			wantErr: true,
 			req: request{
 				domain: "stark.com",
 				alias:  "tony",
@@ -99,7 +126,16 @@ func TestClient_GetAlias(t *testing.T) {
 
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
-			got, _ := c.GetAlias(context.Background(), tt.req.domain, tt.req.alias)
+			got, err := c.GetAlias(context.Background(), tt.req.domain, tt.req.alias)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected parse error for empty body, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Fatalf("values are not the same %s", diff)
 			}
@@ -113,13 +149,15 @@ func TestClient_GetAliases(t *testing.T) {
 	}
 
 	tests := []struct {
-		name string
-		req  request
-		res  string
-		want []Alias
+		name    string
+		wantErr bool
+		req     request
+		res     string
+		want    []Alias
 	}{
 		{
-			name: "no data",
+			name:    "no data",
+			wantErr: true,
 			req: request{
 				domain: "stark.com",
 			},
@@ -235,7 +273,16 @@ func TestClient_GetAliases(t *testing.T) {
 
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
-			got, _ := c.GetAliases(context.Background(), tt.req.domain)
+			got, err := c.GetAliases(context.Background(), tt.req.domain)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected parse error for empty body, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Fatalf("values are not the same %s", diff)
 			}
@@ -251,13 +298,15 @@ func TestClient_CreateAlias(t *testing.T) {
 	}
 
 	tests := []struct {
-		name string
-		req  request
-		res  string
-		want *Alias
+		name    string
+		wantErr bool
+		req     request
+		res     string
+		want    *Alias
 	}{
 		{
-			name: "no data",
+			name:    "no data",
+			wantErr: true,
 			req: request{
 				domain: "stark.com",
 				alias:  "tony",
@@ -364,7 +413,16 @@ func TestClient_CreateAlias(t *testing.T) {
 
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
-			got, _ := c.CreateAlias(context.Background(), tt.req.domain, tt.req.alias, tt.req.params)
+			got, err := c.CreateAlias(context.Background(), tt.req.domain, tt.req.alias, tt.req.params)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected parse error for empty body, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Fatalf("values are not the same %s", diff)
 			}
@@ -380,13 +438,15 @@ func TestClient_UpdateAlias(t *testing.T) {
 	}
 
 	tests := []struct {
-		name string
-		req  request
-		res  string
-		want *Alias
+		name    string
+		wantErr bool
+		req     request
+		res     string
+		want    *Alias
 	}{
 		{
-			name: "no data",
+			name:    "no data",
+			wantErr: true,
 			req: request{
 				domain: "stark.com",
 				alias:  "tony",
@@ -464,7 +524,16 @@ func TestClient_UpdateAlias(t *testing.T) {
 
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
-			got, _ := c.UpdateAlias(context.Background(), tt.req.domain, tt.req.alias, tt.req.params)
+			got, err := c.UpdateAlias(context.Background(), tt.req.domain, tt.req.alias, tt.req.params)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected parse error for empty body, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Fatalf("values are not the same %s", diff)
 			}
@@ -484,6 +553,7 @@ func TestClient_DeleteAlias(t *testing.T) {
 
 	tests := []struct {
 		name      string
+		wantErr   bool
 		req       request
 		res       response
 		wantError bool
