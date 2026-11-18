@@ -5,9 +5,9 @@ package forwardemail
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -35,7 +35,7 @@ func WithAPIURL(u string) Option { return func(c *Client) { c.apiURL = u } }
 // NewClient returns a new Forward Email API Client.
 func NewClient(apiKey string, opts ...Option) (*Client, error) {
 	if apiKey == "" {
-		return nil, fmt.Errorf("%w", ErrMissingAPIKey)
+		return nil, ErrMissingAPIKey
 	}
 
 	c := &Client{
@@ -47,6 +47,8 @@ func NewClient(apiKey string, opts ...Option) (*Client, error) {
 	for _, opt := range opts {
 		opt(c)
 	}
+
+	c.apiURL = strings.TrimSuffix(c.apiURL, "/")
 
 	if err := c.validate(); err != nil {
 		return nil, err

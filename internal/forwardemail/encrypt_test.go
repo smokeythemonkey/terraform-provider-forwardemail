@@ -38,7 +38,7 @@ func TestClient_EncryptRecord(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to read request body: %v", err)
 		}
-		if string(body) != fmt.Sprintf(`{"input": "%s"}`, input) {
+		if string(body) != fmt.Sprintf(`{"input":%q}`, input) {
 			t.Errorf("unexpected request body %q", string(body))
 		}
 

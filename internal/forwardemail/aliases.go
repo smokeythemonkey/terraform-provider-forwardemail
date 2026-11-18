@@ -59,7 +59,7 @@ type Alias struct {
 type AliasParameters struct {
 	Recipients               *[]string
 	Labels                   *[]string
-	Description              string `json:"description"`
+	Description              string
 	HasRecipientVerification *bool
 	IsEnabled                *bool
 	ErrorCodeIfDisabled      *int64

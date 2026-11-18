@@ -10,8 +10,6 @@ import (
 )
 
 var (
-	// ErrRequestFailure is returned when an API request fails.
-	ErrRequestFailure = errors.New("failed to complete request")
 	// ErrMissingAPIKey is returned when no API key is provided.
 	ErrMissingAPIKey = errors.New("no API key provided")
 	// ErrNilContext is returned when a nil context is passed to an API method.
@@ -22,12 +20,6 @@ var (
 	ErrEmptyPath = errors.New("request path cannot be empty")
 	// ErrNilHTTPClient is returned when the client has a nil HTTPClient.
 	ErrNilHTTPClient = errors.New("HTTP client cannot be nil")
-	// ErrFailedToCreateRequest is returned when a new HTTP request cannot be created.
-	ErrFailedToCreateRequest = errors.New("failed to create HTTP request")
-	// ErrFailedToDoRequest is returned when an HTTP request cannot be completed.
-	ErrFailedToDoRequest = errors.New("failed to complete HTTP request")
-	// ErrFailedToUnmarshalResponse is returned when an API response cannot be unmarshaled.
-	ErrFailedToUnmarshalResponse = errors.New("failed to unmarshal API response")
 
 	// ErrEmptyDomain is returned when a domain parameter is empty.
 	ErrEmptyDomain = errors.New("domain cannot be empty")

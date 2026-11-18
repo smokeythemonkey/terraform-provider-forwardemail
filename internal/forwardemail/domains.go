@@ -116,6 +116,8 @@ func (c *Client) CreateDomain(ctx context.Context, name string, parameters Domai
 		return nil, ErrEmptyDomainName
 	}
 
+	name = strings.TrimSpace(name)
+
 	params := url.Values{}
 	params.Add("domain", name)
 
@@ -153,6 +155,7 @@ func (c *Client) UpdateDomain(ctx context.Context, name string, parameters Domai
 		return nil, ErrEmptyDomainName
 	}
 
+	name = strings.TrimSpace(name)
 	encodedName := url.PathEscape(name)
 
 	params := url.Values{}
