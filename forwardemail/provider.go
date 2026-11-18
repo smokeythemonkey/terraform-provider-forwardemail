@@ -58,6 +58,9 @@ func (p *forwardemailProvider) Schema(_ context.Context, _ provider.SchemaReques
 func (p *forwardemailProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	var apiKey types.String
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("api_key"), &apiKey)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	if apiKey.IsNull() {
 		apiKey = types.StringValue(os.Getenv("FORWARDEMAIL_API_KEY"))
@@ -73,6 +76,9 @@ func (p *forwardemailProvider) Configure(ctx context.Context, req provider.Confi
 
 	var allowDomainDeletion types.Bool
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("allow_domain_deletion"), &allowDomainDeletion)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	if allowDomainDeletion.IsNull() {
 		allowDomainDeletion = types.BoolValue(os.Getenv("FORWARDEMAIL_ALLOW_DOMAIN_DELETION") == "true")
 	}
