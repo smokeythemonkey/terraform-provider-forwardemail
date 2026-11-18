@@ -54,13 +54,10 @@ func TestClient_CreateDomainInvite(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var gotMethod, gotPath string
 			svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.Method != http.MethodPost {
-					t.Errorf("expected POST method, got %s", r.Method)
-				}
-				if r.URL.Path != fmt.Sprintf("/v1/domains/%s/invites", tt.domain) {
-					t.Errorf("expected URL %s, got %s", fmt.Sprintf("/v1/domains/%s/invites", tt.domain), r.URL.Path)
-				}
+				gotMethod = r.Method
+				gotPath = r.URL.Path
 				fmt.Fprint(w, tt.response)
 			}))
 			defer svr.Close()
@@ -68,6 +65,13 @@ func TestClient_CreateDomainInvite(t *testing.T) {
 			c := newTestClient(t, WithAPIURL(svr.URL))
 
 			got, _ := c.CreateDomainInvite(context.Background(), tt.domain, tt.email, tt.group)
+			if gotMethod != http.MethodPost {
+				t.Errorf("method = %s, want POST", gotMethod)
+			}
+			wantPath := fmt.Sprintf("/v1/domains/%s/invites", tt.domain)
+			if gotPath != wantPath {
+				t.Errorf("path = %s, want %s", gotPath, wantPath)
+			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Fatalf("values are not the same %s", diff)
 			}

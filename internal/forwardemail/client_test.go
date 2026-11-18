@@ -138,10 +138,9 @@ func TestNewClientMissingAPIKeyErrorIdentity(t *testing.T) {
 
 // A response body exceeding the cap must fail closed with ErrResponseTooLarge.
 func TestClient_ResponseTooLarge(t *testing.T) {
+	var writeErr error
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		if _, err := w.Write(bytes.Repeat([]byte("a"), maxResponseBytes+1)); err != nil {
-			t.Errorf("failed to write response: %v", err)
-		}
+		_, writeErr = w.Write(bytes.Repeat([]byte("a"), maxResponseBytes+1))
 	}))
 	defer svr.Close()
 
@@ -151,14 +150,16 @@ func TestClient_ResponseTooLarge(t *testing.T) {
 	if !errors.Is(err, ErrResponseTooLarge) {
 		t.Fatalf("expected ErrResponseTooLarge, got %v", err)
 	}
+	if writeErr != nil {
+		t.Errorf("failed to write response: %v", writeErr)
+	}
 }
 
 // A success body exactly at the cap boundary must still be returned.
 func TestClient_ResponseAtCapSucceeds(t *testing.T) {
+	var writeErr error
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		if _, err := w.Write(bytes.Repeat([]byte("a"), maxResponseBytes)); err != nil {
-			t.Errorf("failed to write response: %v", err)
-		}
+		_, writeErr = w.Write(bytes.Repeat([]byte("a"), maxResponseBytes))
 	}))
 	defer svr.Close()
 
@@ -176,15 +177,17 @@ func TestClient_ResponseAtCapSucceeds(t *testing.T) {
 	if len(body) != maxResponseBytes {
 		t.Errorf("body len = %d, want %d", len(body), maxResponseBytes)
 	}
+	if writeErr != nil {
+		t.Errorf("failed to write response: %v", writeErr)
+	}
 }
 
 // An oversized error body must be truncated to maxErrorBodyBytes, not retained in full.
 func TestClient_ErrorBodyTruncated(t *testing.T) {
+	var writeErr error
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		if _, err := w.Write(bytes.Repeat([]byte("e"), maxErrorBodyBytes*2)); err != nil {
-			t.Errorf("failed to write response: %v", err)
-		}
+		_, writeErr = w.Write(bytes.Repeat([]byte("e"), maxErrorBodyBytes*2))
 	}))
 	defer svr.Close()
 
@@ -200,5 +203,8 @@ func TestClient_ErrorBodyTruncated(t *testing.T) {
 	}
 	if len(apiErr.Body) != maxErrorBodyBytes {
 		t.Errorf("error body len = %d, want %d", len(apiErr.Body), maxErrorBodyBytes)
+	}
+	if writeErr != nil {
+		t.Errorf("failed to write response: %v", writeErr)
 	}
 }

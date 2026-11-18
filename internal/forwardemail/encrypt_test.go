@@ -26,22 +26,16 @@ func TestClient_EncryptRecord(t *testing.T) {
 		Encrypted: "forward-email-site-verification=$2a$10$abc123",
 	}
 
+	var gotMethod, gotPath, gotBody string
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			t.Errorf("expected POST method, got %s", r.Method)
-		}
-		if r.URL.Path != "/v1/encrypt" {
-			t.Errorf("expected URL /v1/encrypt, got %s", r.URL.Path)
-		}
-
+		gotMethod = r.Method
+		gotPath = r.URL.Path
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			t.Fatalf("failed to read request body: %v", err)
+			gotBody = "read error: " + err.Error()
+		} else {
+			gotBody = string(body)
 		}
-		if string(body) != fmt.Sprintf(`{"input":%q}`, input) {
-			t.Errorf("unexpected request body %q", string(body))
-		}
-
 		fmt.Fprint(w, response)
 	}))
 	defer svr.Close()
@@ -51,6 +45,15 @@ func TestClient_EncryptRecord(t *testing.T) {
 	got, err := c.EncryptRecord(context.Background(), input)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if gotMethod != http.MethodPost {
+		t.Errorf("method = %s, want POST", gotMethod)
+	}
+	if gotPath != "/v1/encrypt" {
+		t.Errorf("path = %s, want /v1/encrypt", gotPath)
+	}
+	if wantBody := fmt.Sprintf(`{"input":%q}`, input); gotBody != wantBody {
+		t.Errorf("request body = %q, want %q", gotBody, wantBody)
 	}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("values are not the same %s", diff)
@@ -70,20 +73,20 @@ func TestClient_EncryptRecordMissingInput(t *testing.T) {
 func TestClient_EncryptRecordEscapesJSONInput(t *testing.T) {
 	const input = `she said "hello"`
 
+	var gotBody, decoded string
+	var payloadErr error
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			t.Errorf("failed to read request body: %v", err)
+			gotBody = "read error: " + err.Error()
+		} else {
+			gotBody = string(body)
 		}
 		var payload struct {
 			Input string `json:"input"`
 		}
-		if err := json.Unmarshal(body, &payload); err != nil {
-			t.Errorf("request body is not valid JSON: %v (raw: %s)", err, body)
-		}
-		if payload.Input != input {
-			t.Errorf("server decoded input %q, want %q", payload.Input, input)
-		}
+		payloadErr = json.Unmarshal(body, &payload)
+		decoded = payload.Input
 		fmt.Fprint(w, `{"encrypted": "ok"}`)
 	}))
 	defer svr.Close()
@@ -92,6 +95,12 @@ func TestClient_EncryptRecordEscapesJSONInput(t *testing.T) {
 
 	if _, err := c.EncryptRecord(context.Background(), input); err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if payloadErr != nil {
+		t.Errorf("request body is not valid JSON: %v (raw: %s)", payloadErr, gotBody)
+	}
+	if decoded != input {
+		t.Errorf("server decoded input %q, want %q", decoded, input)
 	}
 }
 

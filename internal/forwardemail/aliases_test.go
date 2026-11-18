@@ -546,23 +546,22 @@ func pointSliceOfStrings(s []string) *[]string {
 // endpoints send an object. UnmarshalJSON on Alias must tolerate both so a
 // successful update never fails response parsing.
 func TestClient_UpdateAliasToleratesStringUser(t *testing.T) {
+	var gotMethod string
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPut {
-			t.Errorf("method = %s, want PUT", r.Method)
-		}
+		gotMethod = r.Method
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, `{"user":"tony@stark.com","domain":{"name":"stark.com"},"name":"tony","is_enabled":true}`)
 	}))
 	defer svr.Close()
 
-	c, err := NewClient("test-key", WithAPIURL(svr.URL))
-	if err != nil {
-		t.Fatalf("NewClient: %v", err)
-	}
+	c := newTestClient(t, WithAPIURL(svr.URL))
 
 	got, err := c.UpdateAlias(context.Background(), "stark.com", "tony", AliasParameters{IsEnabled: pointBool(true)})
 	if err != nil {
 		t.Fatalf("UpdateAlias with string user must not fail parsing: %v", err)
+	}
+	if gotMethod != http.MethodPut {
+		t.Errorf("method = %s, want PUT", gotMethod)
 	}
 	if got.Name != "tony" || got.Domain.Name != "stark.com" || !got.IsEnabled {
 		t.Errorf("unexpected alias: %+v", got)
@@ -577,27 +576,29 @@ func TestClient_UpdateAliasToleratesStringUser(t *testing.T) {
 // in the form body.
 func TestClient_UpdateAliasSendsOnlyProvidedParameters(t *testing.T) {
 	var gotForm url.Values
+	var gotMethod string
+	var formErr error
 
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPut {
-			t.Errorf("method = %s, want PUT", r.Method)
-		}
-		if err := r.ParseForm(); err != nil {
-			t.Errorf("ParseForm: %v", err)
-		}
+		gotMethod = r.Method
+		formErr = r.ParseForm()
 		gotForm = r.PostForm
 		fmt.Fprint(w, `{"name":"tony","domain":{"name":"stark.com"}}`)
 	}))
 	defer svr.Close()
 
-	c, err := NewClient("test-key", WithAPIURL(svr.URL))
-	if err != nil {
-		t.Fatalf("NewClient: %v", err)
-	}
+	c := newTestClient(t, WithAPIURL(svr.URL))
 
 	params := AliasParameters{IsEnabled: pointBool(false)}
 	if _, err := c.UpdateAlias(context.Background(), "stark.com", "tony", params); err != nil {
 		t.Fatalf("UpdateAlias: %v", err)
+	}
+
+	if gotMethod != http.MethodPut {
+		t.Errorf("method = %s, want PUT", gotMethod)
+	}
+	if formErr != nil {
+		t.Errorf("ParseForm: %v", formErr)
 	}
 
 	if got := gotForm.Get("is_enabled"); got != "false" {

@@ -426,11 +426,10 @@ func TestClient_DeleteDomain(t *testing.T) {
 // TrimSpace is used for validation, so the same trimmed value must be sent to the API.
 func TestClient_CreateDomainTrimsNameBeforeSending(t *testing.T) {
 	var gotDomain string
+	var formErr error
 
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseForm(); err != nil {
-			t.Errorf("failed to parse form: %v", err)
-		}
+		formErr = r.ParseForm()
 		gotDomain = r.PostForm.Get("domain")
 		fmt.Fprint(w, `{"name": "stark.com", "object": "domain"}`)
 	}))
@@ -441,6 +440,9 @@ func TestClient_CreateDomainTrimsNameBeforeSending(t *testing.T) {
 	const padded = "  stark.com  "
 	if _, err := c.CreateDomain(context.Background(), padded, DomainParameters{}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if formErr != nil {
+		t.Errorf("failed to parse form: %v", formErr)
 	}
 	const want = "stark.com"
 	if gotDomain != want {
