@@ -4,6 +4,7 @@
 package forwardemail
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -108,5 +109,72 @@ func TestNewClientMissingAPIKeyErrorIdentity(t *testing.T) {
 	}
 	if errors.Unwrap(err) != nil {
 		t.Errorf(`NewClient("") must return ErrMissingAPIKey directly, got wrapped: %v`, err)
+	}
+}
+
+// A response body exceeding the cap must fail closed with ErrResponseTooLarge.
+func TestClient_ResponseTooLarge(t *testing.T) {
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if _, err := w.Write(bytes.Repeat([]byte("a"), maxResponseBytes+1)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
+	}))
+	defer svr.Close()
+
+	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+
+	_, err := c.GetDomain(context.Background(), "stark.com")
+	if !errors.Is(err, ErrResponseTooLarge) {
+		t.Fatalf("expected ErrResponseTooLarge, got %v", err)
+	}
+}
+
+// A success body exactly at the cap boundary must still be returned.
+func TestClient_ResponseAtCapSucceeds(t *testing.T) {
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if _, err := w.Write(bytes.Repeat([]byte("a"), maxResponseBytes)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
+	}))
+	defer svr.Close()
+
+	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+
+	req, err := c.newRequest(context.Background(), http.MethodGet, "/v1/account", nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		t.Fatalf("body exactly at cap must be accepted, got %v", err)
+	}
+	if len(body) != maxResponseBytes {
+		t.Errorf("body len = %d, want %d", len(body), maxResponseBytes)
+	}
+}
+
+// An oversized error body must be truncated to maxErrorBodyBytes, not retained in full.
+func TestClient_ErrorBodyTruncated(t *testing.T) {
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		if _, err := w.Write(bytes.Repeat([]byte("e"), maxErrorBodyBytes*2)); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
+	}))
+	defer svr.Close()
+
+	c, _ := NewClient("test-key", WithAPIURL(svr.URL))
+
+	_, err := c.GetDomain(context.Background(), "stark.com")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	apiErr := &APIError{}
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("expected *APIError, got %T", err)
+	}
+	if len(apiErr.Body) != maxErrorBodyBytes {
+		t.Errorf("error body len = %d, want %d", len(apiErr.Body), maxErrorBodyBytes)
 	}
 }

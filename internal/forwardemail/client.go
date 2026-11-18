@@ -5,6 +5,7 @@ package forwardemail
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -13,6 +14,13 @@ import (
 
 const (
 	forwardemailAPIURL = "https://api.forwardemail.net"
+
+	// MaxResponseBytes caps how much of a response body we read into memory,
+	// so a misbehaving API can't OOM the provider.
+	maxResponseBytes = 32 << 20
+
+	// MaxErrorBodyBytes caps how much of an error body we retain on APIError.
+	maxErrorBodyBytes = 4 << 10
 )
 
 // Client is the main client for interacting with the Forward Email API.
@@ -111,13 +119,20 @@ func (c *Client) doRequest(req *http.Request) ([]byte, error) {
 		_ = res.Body.Close()
 	}()
 
-	body, err := io.ReadAll(res.Body)
+	body, err := io.ReadAll(io.LimitReader(res.Body, maxResponseBytes+1))
 	if err != nil {
 		return nil, err
+	}
+	if len(body) > maxResponseBytes {
+		return nil, fmt.Errorf("%w (limit %d bytes)", ErrResponseTooLarge, maxResponseBytes)
 	}
 
 	if res.StatusCode >= 200 && res.StatusCode < 300 {
 		return body, nil
+	}
+
+	if len(body) > maxErrorBodyBytes {
+		body = body[:maxErrorBodyBytes]
 	}
 
 	return nil, &APIError{StatusCode: res.StatusCode, Body: body}

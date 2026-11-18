@@ -20,6 +20,8 @@ var (
 	ErrEmptyPath = errors.New("request path cannot be empty")
 	// ErrNilHTTPClient is returned when the client has a nil HTTPClient.
 	ErrNilHTTPClient = errors.New("HTTP client cannot be nil")
+	// ErrResponseTooLarge is returned when an API response body exceeds the client's read cap.
+	ErrResponseTooLarge = errors.New("API response too large")
 
 	// ErrEmptyDomain is returned when a domain parameter is empty.
 	ErrEmptyDomain = errors.New("domain cannot be empty")
