@@ -257,8 +257,7 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 
 	alias, err := aliasResource.client.GetAlias(ctx, state.Domain.ValueString(), state.Name.ValueString())
 	if err != nil {
-		var apiErr *forwardemail.APIError
-		if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
+		if forwardemail.IsStatus(err, http.StatusNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

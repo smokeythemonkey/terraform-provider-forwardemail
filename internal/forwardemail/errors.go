@@ -49,3 +49,11 @@ type APIError struct {
 func (e *APIError) Error() string {
 	return fmt.Sprintf("forwardemail: API error %d: %s", e.StatusCode, http.StatusText(e.StatusCode))
 }
+
+// IsStatus reports whether err is (or wraps) an *APIError with the given
+// HTTP status code, matched through the error chain rather than the
+// formatted message text.
+func IsStatus(err error, code int) bool {
+	var apiErr *APIError
+	return errors.As(err, &apiErr) && apiErr.StatusCode == code
+}

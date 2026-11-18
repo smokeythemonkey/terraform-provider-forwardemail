@@ -2,7 +2,6 @@ package forwardemail
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -142,7 +141,6 @@ func (domainResource *domainResource) Create(ctx context.Context, req resource.C
 
 func (domainResource *domainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state DomainModel
-	var apiErr *forwardemail.APIError
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -151,7 +149,7 @@ func (domainResource *domainResource) Read(ctx context.Context, req resource.Rea
 
 	domain, err := domainResource.client.GetDomain(ctx, state.Id.ValueString())
 	if err != nil {
-		if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusNotFound {
+		if forwardemail.IsStatus(err, http.StatusNotFound) {
 			resp.State.RemoveResource(ctx)
 			return
 		}

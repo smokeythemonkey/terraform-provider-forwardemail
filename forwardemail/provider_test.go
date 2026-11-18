@@ -2,8 +2,8 @@ package forwardemail
 
 import (
 	"context"
+	"net/http"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -37,7 +37,7 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatalf("precheck failed creating forward email client: %v", err)
 	}
 	if _, err := client.GetAccount(context.Background()); err != nil {
-		if strings.Contains(err.Error(), "status: 402") || strings.Contains(err.Error(), "Payment Required") {
+		if forwardemail.IsStatus(err, http.StatusPaymentRequired) {
 			t.Skip("Acceptance tests skipped: Forward Email plan does not permit this operation (402 Payment Required)")
 		}
 		t.Fatalf("precheck failed getting account: %v", err)
