@@ -55,14 +55,15 @@ type Alias struct {
 	UpdatedAt                time.Time  `json:"updated_at"`
 }
 
-// UnmarshalJSON tolerates the "user" field being serialized as a plain
-// string (the update-alias endpoint does this) while other endpoints send
-// an object.
+// UnmarshalJSON tolerates the "user" and "domain" fields being serialized
+// as plain strings (the update-alias endpoint does this) while other
+// endpoints send objects.
 func (a *Alias) UnmarshalJSON(data []byte) error {
 	type aliasAlias Alias // avoid recursion
 	var raw struct {
 		aliasAlias
 		Account json.RawMessage `json:"user"`
+		Domain  json.RawMessage `json:"domain"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
@@ -76,6 +77,17 @@ func (a *Alias) UnmarshalJSON(data []byte) error {
 			}
 			a.Account.Email = email
 		} else if err := json.Unmarshal(raw.Account, &a.Account); err != nil {
+			return err
+		}
+	}
+	if len(raw.Domain) > 0 && string(raw.Domain) != "null" {
+		if raw.Domain[0] == '"' {
+			var name string
+			if err := json.Unmarshal(raw.Domain, &name); err != nil {
+				return fmt.Errorf("%w: domain: %s", ErrUnsupportedJSONValue, raw.Domain)
+			}
+			a.Domain.Name = name
+		} else if err := json.Unmarshal(raw.Domain, &a.Domain); err != nil {
 			return err
 		}
 	}

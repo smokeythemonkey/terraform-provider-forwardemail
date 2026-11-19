@@ -362,6 +362,58 @@ func changedAliasParams(plan, state AliasModel, recipients, labels []string) for
 	return params
 }
 
+// fillUnknownPlanFromState copies prior state values into any plan attribute
+// that is still unknown after apply planning. Optional+Computed attributes
+// the user never configured stay unknown in the plan, and Terraform requires
+// every value to be known after apply, so those fall back to state.
+func fillUnknownPlanFromState(plan, state *AliasModel) {
+	if plan.Enabled.IsUnknown() {
+		plan.Enabled = state.Enabled
+	}
+	if plan.RecipientVerification.IsUnknown() {
+		plan.RecipientVerification = state.RecipientVerification
+	}
+	if plan.HasIMAP.IsUnknown() {
+		plan.HasIMAP = state.HasIMAP
+	}
+	if plan.HasPGP.IsUnknown() {
+		plan.HasPGP = state.HasPGP
+	}
+	if plan.PublicKey.IsUnknown() {
+		plan.PublicKey = state.PublicKey
+	}
+	if plan.HasSMIME.IsUnknown() {
+		plan.HasSMIME = state.HasSMIME
+	}
+	if plan.SMIMECertificate.IsUnknown() {
+		plan.SMIMECertificate = state.SMIMECertificate
+	}
+	if plan.HasWKDDisabled.IsUnknown() {
+		plan.HasWKDDisabled = state.HasWKDDisabled
+	}
+	if plan.ErrorCodeIfDisabled.IsUnknown() {
+		plan.ErrorCodeIfDisabled = state.ErrorCodeIfDisabled
+	}
+	if plan.MaxQuota.IsUnknown() {
+		plan.MaxQuota = state.MaxQuota
+	}
+	if plan.Retention.IsUnknown() {
+		plan.Retention = state.Retention
+	}
+	if plan.SMTPLimit.IsUnknown() {
+		plan.SMTPLimit = state.SMTPLimit
+	}
+	if plan.Recipients.IsUnknown() {
+		plan.Recipients = state.Recipients
+	}
+	if plan.Description.IsUnknown() {
+		plan.Description = state.Description
+	}
+	if plan.Labels.IsUnknown() {
+		plan.Labels = state.Labels
+	}
+}
+
 func (aliasResource *aliasResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state AliasModel
 
@@ -386,12 +438,16 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	// Only identity fields come from the API; every planned value is kept
-	// so Terraform does not report an inconsistent result when the API
-	// normalizes or does not echo a parameter back.
+	// Only identity fields come from the API. Every other planned value is
+	// carried over from the plan (or from state when the plan value is
+	// unknown, which happens for Optional+Computed attributes the user
+	// never set): the plan is the source of truth after apply, and
+	// overwriting it with an API-normalized value or leaving it unknown
+	// would make Terraform report an inconsistent/unknown result.
 	plan.ID = types.StringValue(alias.Name)
 	plan.Domain = types.StringValue(alias.Domain.Name)
 	plan.Name = types.StringValue(alias.Name)
+	fillUnknownPlanFromState(&plan, &state)
 
 	if resp.Diagnostics.HasError() {
 		return

@@ -668,15 +668,15 @@ func TestEncodeAliasParamsDistinguishesUnsetFromClear(t *testing.T) {
 	}
 }
 
-// The update-alias endpoint serializes "user" as a string while other
-// endpoints send an object. UnmarshalJSON on Alias must tolerate both so a
-// successful update never fails response parsing.
-func TestClient_UpdateAliasToleratesStringUser(t *testing.T) {
+// The update-alias endpoint serializes "user" and "domain" as strings while
+// other endpoints send objects. UnmarshalJSON on Alias must tolerate both so
+// a successful update never fails response parsing.
+func TestClient_UpdateAliasToleratesStringUserAndDomain(t *testing.T) {
 	var gotMethod string
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotMethod = r.Method
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{"user":"tony@stark.com","domain":{"name":"stark.com"},"name":"tony","is_enabled":true}`)
+		fmt.Fprint(w, `{"user":"tony@stark.com","domain":"stark.com","name":"tony","is_enabled":true}`)
 	}))
 	defer svr.Close()
 
