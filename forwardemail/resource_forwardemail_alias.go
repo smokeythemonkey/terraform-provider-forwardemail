@@ -12,7 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -103,35 +106,60 @@ func (aliasResource *aliasResource) Schema(_ context.Context, _ resource.SchemaR
 				Optional:    true,
 				Computed:    true,
 				Description: "Whether to enable PGP encryption for this alias.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"public_key": schema.StringAttribute{
 				Optional:    true,
+				Computed:    true,
 				Description: "PGP public key (armored) used to encrypt inbound mail to this alias.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"has_smime": schema.BoolAttribute{
 				Optional:    true,
 				Computed:    true,
 				Description: "Whether to enable S/MIME encryption for this alias.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"smime_certificate": schema.StringAttribute{
 				Optional:    true,
+				Computed:    true,
 				Description: "S/MIME certificate (PEM) used to encrypt inbound mail to this alias.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"has_wkd_disabled": schema.BoolAttribute{
 				Optional:    true,
 				Computed:    true,
 				Description: "Whether to disable Web Key Directory (WKD) lookups for this alias.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"error_code_if_disabled": schema.Int64Attribute{
 				Optional:    true,
+				Computed:    true,
 				Description: "SMTP response code to use when the alias is disabled (one of 250, 421, 550).",
 				Validators: []validator.Int64{
 					int64validator.OneOf(250, 421, 550),
 				},
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"max_quota": schema.StringAttribute{
 				Optional:    true,
+				Computed:    true,
 				Description: "Maximum storage quota for this alias (e.g. \"1 GB\").",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"retention": schema.Int64Attribute{
 				Optional:    true,
@@ -140,11 +168,17 @@ func (aliasResource *aliasResource) Schema(_ context.Context, _ resource.SchemaR
 				Validators: []validator.Int64{
 					int64validator.Between(0, 365),
 				},
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"smtp_limit": schema.Int64Attribute{
 				Optional:    true,
 				Computed:    true,
 				Description: "Maximum number of outbound SMTP messages per day for this alias (0 for unlimited).",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"recipients": schema.ListAttribute{
 				Optional:    true,
@@ -152,11 +186,17 @@ func (aliasResource *aliasResource) Schema(_ context.Context, _ resource.SchemaR
 				ElementType: types.StringType,
 				Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 				Description: "List of recipients as valid email addresses, fully-qualified domain names (FQDN), IP addresses, or webhook URL's.",
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"description": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
 				Description: "Alias description.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"labels": schema.ListAttribute{
 				Optional:    true,
@@ -164,6 +204,9 @@ func (aliasResource *aliasResource) Schema(_ context.Context, _ resource.SchemaR
 				ElementType: types.StringType,
 				Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 				Description: "List of labels.",
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -232,10 +275,10 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 	plan.Name = types.StringValue(alias.Name)
 	// Echoed attributes are materialized from the API response (they are
 	// Computed, so the plan value may be unknown here). One-way attributes
-	// (public_key, smime_certificate, error_code_if_disabled, max_quota)
-	// are NOT set from the response: the API may echo a default for them,
-	// and overwriting a null plan value with it fails the apply with
-	// "inconsistent result after apply".
+	// (public_key, smime_certificate) are only set from the response when
+	// the plan was unknown: the API may echo a default for them, and
+	// overwriting an explicitly configured plan value with it fails the
+	// apply with "inconsistent result after apply".
 	plan.Enabled = types.BoolValue(alias.IsEnabled)
 	plan.RecipientVerification = types.BoolValue(alias.HasRecipientVerification)
 	plan.HasIMAP = types.BoolValue(alias.HasIMAP)
@@ -245,6 +288,18 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 	plan.Retention = types.Int64Value(int64(alias.Retention))
 	plan.SMTPLimit = types.Int64Value(int64(alias.SMTPLimit))
 	plan.Description = types.StringValue(alias.Description)
+	if plan.PublicKey.IsUnknown() {
+		plan.PublicKey = types.StringValue(alias.PublicKey)
+	}
+	if plan.SMIMECertificate.IsUnknown() {
+		plan.SMIMECertificate = types.StringValue(alias.SMIMECertificate)
+	}
+	if plan.ErrorCodeIfDisabled.IsUnknown() {
+		plan.ErrorCodeIfDisabled = types.Int64Value(int64(alias.ErrorCodeIfDisabled))
+	}
+	if plan.MaxQuota.IsUnknown() {
+		plan.MaxQuota = types.StringValue(string(alias.MaxQuota))
+	}
 
 	recipientsList, diags := types.ListValueFrom(ctx, types.StringType, alias.Recipients)
 	resp.Diagnostics.Append(diags...)
@@ -362,58 +417,6 @@ func changedAliasParams(plan, state AliasModel, recipients, labels []string) for
 	return params
 }
 
-// fillUnknownPlanFromState copies prior state values into any plan attribute
-// that is still unknown after apply planning. Optional+Computed attributes
-// the user never configured stay unknown in the plan, and Terraform requires
-// every value to be known after apply, so those fall back to state.
-func fillUnknownPlanFromState(plan, state *AliasModel) {
-	if plan.Enabled.IsUnknown() {
-		plan.Enabled = state.Enabled
-	}
-	if plan.RecipientVerification.IsUnknown() {
-		plan.RecipientVerification = state.RecipientVerification
-	}
-	if plan.HasIMAP.IsUnknown() {
-		plan.HasIMAP = state.HasIMAP
-	}
-	if plan.HasPGP.IsUnknown() {
-		plan.HasPGP = state.HasPGP
-	}
-	if plan.PublicKey.IsUnknown() {
-		plan.PublicKey = state.PublicKey
-	}
-	if plan.HasSMIME.IsUnknown() {
-		plan.HasSMIME = state.HasSMIME
-	}
-	if plan.SMIMECertificate.IsUnknown() {
-		plan.SMIMECertificate = state.SMIMECertificate
-	}
-	if plan.HasWKDDisabled.IsUnknown() {
-		plan.HasWKDDisabled = state.HasWKDDisabled
-	}
-	if plan.ErrorCodeIfDisabled.IsUnknown() {
-		plan.ErrorCodeIfDisabled = state.ErrorCodeIfDisabled
-	}
-	if plan.MaxQuota.IsUnknown() {
-		plan.MaxQuota = state.MaxQuota
-	}
-	if plan.Retention.IsUnknown() {
-		plan.Retention = state.Retention
-	}
-	if plan.SMTPLimit.IsUnknown() {
-		plan.SMTPLimit = state.SMTPLimit
-	}
-	if plan.Recipients.IsUnknown() {
-		plan.Recipients = state.Recipients
-	}
-	if plan.Description.IsUnknown() {
-		plan.Description = state.Description
-	}
-	if plan.Labels.IsUnknown() {
-		plan.Labels = state.Labels
-	}
-}
-
 func (aliasResource *aliasResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state AliasModel
 
@@ -438,16 +441,13 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	// Only identity fields come from the API. Every other planned value is
-	// carried over from the plan (or from state when the plan value is
-	// unknown, which happens for Optional+Computed attributes the user
-	// never set): the plan is the source of truth after apply, and
-	// overwriting it with an API-normalized value or leaving it unknown
-	// would make Terraform report an inconsistent/unknown result.
+	// Only identity fields come from the API; every planned value is kept
+	// so Terraform does not report an inconsistent result when the API
+	// normalizes or does not echo a parameter back. Unknown plan values are
+	// already filled from state at plan time by UseStateForUnknown.
 	plan.ID = types.StringValue(alias.Name)
 	plan.Domain = types.StringValue(alias.Domain.Name)
 	plan.Name = types.StringValue(alias.Name)
-	fillUnknownPlanFromState(&plan, &state)
 
 	if resp.Diagnostics.HasError() {
 		return

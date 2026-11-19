@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -60,5 +61,60 @@ func TestAliasSchemaValidators(t *testing.T) {
 				t.Errorf("validators for %s=%d: got valid=%v, want %v (diags: %v)", tt.attr, tt.value, gotValid, tt.wantValid, resp.Diagnostics)
 			}
 		})
+	}
+}
+
+// Optional+Computed attributes that the user never configures stay unknown in
+// the plan; UseStateForUnknown must be registered so the framework fills them
+// from prior state and no value is unknown after apply.
+func TestAliasSchemaUseStateForUnknown(t *testing.T) {
+	r := &aliasResource{}
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(context.Background(), resource.SchemaRequest{}, schemaResp)
+	if schemaResp.Diagnostics.HasError() {
+		t.Fatalf("schema diagnostics: %v", schemaResp.Diagnostics)
+	}
+
+	wantModifiers := map[string]int{
+		"has_pgp":                1,
+		"public_key":             1,
+		"has_smime":              1,
+		"smime_certificate":      1,
+		"has_wkd_disabled":       1,
+		"error_code_if_disabled": 1,
+		"max_quota":              1,
+		"retention":              1,
+		"smtp_limit":             1,
+		"recipients":             1,
+		"description":            1,
+		"labels":                 1,
+	}
+
+	for name, wantCount := range wantModifiers {
+		attrSchema, ok := schemaResp.Schema.Attributes[name]
+		if !ok {
+			t.Errorf("attribute %q missing from schema", name)
+			continue
+		}
+		var modifiers []planmodifier.String
+		switch a := attrSchema.(type) {
+		case schema.BoolAttribute:
+			if len(a.PlanModifiers) != wantCount {
+				t.Errorf("%s: got %d plan modifiers, want %d", name, len(a.PlanModifiers), wantCount)
+			}
+		case schema.StringAttribute:
+			modifiers = a.PlanModifiers
+		case schema.Int64Attribute:
+			if len(a.PlanModifiers) != wantCount {
+				t.Errorf("%s: got %d plan modifiers, want %d", name, len(a.PlanModifiers), wantCount)
+			}
+		case schema.ListAttribute:
+			if len(a.PlanModifiers) != wantCount {
+				t.Errorf("%s: got %d plan modifiers, want %d", name, len(a.PlanModifiers), wantCount)
+			}
+		default:
+			t.Errorf("%s: unexpected attribute type %T", name, attrSchema)
+		}
+		_ = modifiers
 	}
 }
