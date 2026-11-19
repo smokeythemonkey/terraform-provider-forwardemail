@@ -9,6 +9,7 @@ cat <<EOF > "$RC"
 provider_installation {
   dev_overrides {
     "smokeythemonkey/forwardemail" = "$BIN_DIR"
+    "registry.terraform.io/smokeythemonkey/forwardemail" = "$BIN_DIR"
   }
   direct {}
 }
