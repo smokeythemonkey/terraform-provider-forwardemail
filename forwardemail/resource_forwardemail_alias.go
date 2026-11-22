@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
@@ -145,7 +146,8 @@ func (aliasResource *aliasResource) Schema(_ context.Context, _ resource.SchemaR
 			"error_code_if_disabled": schema.Int64Attribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "SMTP response code to use when the alias is disabled (one of 250, 421, 550).",
+				Default:     int64default.StaticInt64(250),
+				Description: "SMTP response code to use when the alias is disabled (one of 250, 421, 550). Defaults to 250.",
 				Validators: []validator.Int64{
 					int64validator.OneOf(250, 421, 550),
 				},
@@ -243,22 +245,27 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
+	// Attribute values that are still unknown were never configured: the
+	// Value*Pointer() helpers would fabricate zero values for them
+	// (error_code_if_disabled=0 is rejected by the API: "Error code if
+	// disabled must be either 250, 421, or 550"), so every unconfigured
+	// parameter is omitted and the API applies its own defaults.
 	params := forwardemail.AliasParameters{
-		HasRecipientVerification: plan.RecipientVerification.ValueBoolPointer(),
-		IsEnabled:                plan.Enabled.ValueBoolPointer(),
-		HasIMAP:                  plan.HasIMAP.ValueBoolPointer(),
-		HasPGP:                   plan.HasPGP.ValueBoolPointer(),
-		PublicKey:                plan.PublicKey.ValueStringPointer(),
-		HasSMIME:                 plan.HasSMIME.ValueBoolPointer(),
-		SMIMECertificate:         plan.SMIMECertificate.ValueStringPointer(),
-		HasWKDDisabled:           plan.HasWKDDisabled.ValueBoolPointer(),
-		ErrorCodeIfDisabled:      plan.ErrorCodeIfDisabled.ValueInt64Pointer(),
-		MaxQuota:                 plan.MaxQuota.ValueStringPointer(),
-		Retention:                plan.Retention.ValueInt64Pointer(),
-		SMTPLimit:                plan.SMTPLimit.ValueInt64Pointer(),
+		HasRecipientVerification: knownBoolPointer(plan.RecipientVerification),
+		IsEnabled:                knownBoolPointer(plan.Enabled),
+		HasIMAP:                  knownBoolPointer(plan.HasIMAP),
+		HasPGP:                   knownBoolPointer(plan.HasPGP),
+		PublicKey:                knownStringPointer(plan.PublicKey),
+		HasSMIME:                 knownBoolPointer(plan.HasSMIME),
+		SMIMECertificate:         knownStringPointer(plan.SMIMECertificate),
+		HasWKDDisabled:           knownBoolPointer(plan.HasWKDDisabled),
+		ErrorCodeIfDisabled:      knownInt64Pointer(plan.ErrorCodeIfDisabled),
+		MaxQuota:                 knownStringPointer(plan.MaxQuota),
+		Retention:                knownInt64Pointer(plan.Retention),
+		SMTPLimit:                knownInt64Pointer(plan.SMTPLimit),
 		Recipients:               &recipients,
 		Labels:                   &labels,
-		Description:              plan.Description.ValueStringPointer(),
+		Description:              knownStringPointer(plan.Description),
 	}
 
 	alias, err := aliasResource.client.CreateAlias(ctx, plan.Domain.ValueString(), plan.Name.ValueString(), params)
@@ -362,11 +369,6 @@ func (aliasResource *aliasResource) Read(ctx context.Context, req resource.ReadR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-// changedAliasParams builds the API parameters for an update from only the
-// attributes that differ between plan and state. The Forward Email alias
-// API resets any absent field (description, labels, recipients) on PUT, so
-// only the attributes that actually changed may be sent; sending everything
-// would let the API clobber fields the user never configured.
 func changedAliasParams(plan, state AliasModel, recipients, labels []string) forwardemail.AliasParameters {
 	params := forwardemail.AliasParameters{}
 	if changed(plan.RecipientVerification, state.RecipientVerification) {
@@ -435,23 +437,12 @@ func (aliasResource *aliasResource) Update(ctx context.Context, req resource.Upd
 
 	params := changedAliasParams(plan, state, recipients, labels)
 
-	alias, err := aliasResource.client.UpdateAlias(ctx, state.Domain.ValueString(), state.Name.ValueString(), params)
-	if err != nil {
+	if _, err := aliasResource.client.UpdateAlias(ctx, state.Domain.ValueString(), state.Name.ValueString(), params); err != nil {
 		resp.Diagnostics.AddError("Failed to update alias", err.Error())
 		return
 	}
 
-	// Only identity fields come from the API; every planned value is kept
-	// so Terraform does not report an inconsistent result when the API
-	// normalizes or does not echo a parameter back. Unknown plan values are
-	// already filled from state at plan time by UseStateForUnknown.
-	plan.ID = types.StringValue(alias.Name)
-	plan.Domain = types.StringValue(alias.Domain.Name)
-	plan.Name = types.StringValue(alias.Name)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	plan.ID = types.StringValue(plan.Name.ValueString())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }

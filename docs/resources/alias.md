@@ -24,7 +24,7 @@ A resource to create Forward Email domain aliases.
 
 - `description` (String) Alias description.
 - `enabled` (Boolean) Whether to enable to disable this alias.
-- `error_code_if_disabled` (Number) SMTP response code to use when the alias is disabled (one of 250, 421, 550).
+- `error_code_if_disabled` (Number) SMTP response code to use when the alias is disabled (one of 250, 421, 550). Defaults to 250.
 - `has_imap` (Boolean) Whether to enable the webmail (IMAP) option for this alias.
 - `has_pgp` (Boolean) Whether to enable PGP encryption for this alias.
 - `has_smime` (Boolean) Whether to enable S/MIME encryption for this alias.
