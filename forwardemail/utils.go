@@ -1,7 +1,10 @@
 package forwardemail
 
 import (
+	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -34,4 +37,21 @@ func knownStringPointer(v types.String) *string {
 		return nil
 	}
 	return v.ValueStringPointer()
+}
+
+// knownStringListPointer is the list analog of the known*Pointer helpers:
+// unknown (never configured during create) and null (unconfigured at all)
+// are omitted, while a known list — including an explicitly planned empty
+// one — is sent. The list has its own decode step, so it needs the
+// diagnostics and context the value helpers don't.
+func knownStringListPointer(ctx context.Context, v types.List, respDiags *diag.Diagnostics) *[]string {
+	if v.IsUnknown() || v.IsNull() {
+		return nil
+	}
+	var values []string
+	respDiags.Append(v.ElementsAs(ctx, &values, false)...)
+	if respDiags.HasError() {
+		return nil
+	}
+	return &values
 }

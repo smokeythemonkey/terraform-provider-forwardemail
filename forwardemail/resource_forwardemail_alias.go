@@ -238,18 +238,13 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	var recipients, labels []string
-	resp.Diagnostics.Append(plan.Recipients.ElementsAs(ctx, &recipients, false)...)
-	resp.Diagnostics.Append(plan.Labels.ElementsAs(ctx, &labels, false)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Attribute values that are still unknown were never configured: the
 	// Value*Pointer() helpers would fabricate zero values for them
 	// (error_code_if_disabled=0 is rejected by the API: "Error code if
 	// disabled must be either 250, 421, or 550"), so every unconfigured
 	// parameter is omitted and the API applies its own defaults.
+	// Recipients and labels get the same treatment through
+	// knownStringListPointer: null lists are unconfigured and omitted too.
 	params := forwardemail.AliasParameters{
 		HasRecipientVerification: knownBoolPointer(plan.RecipientVerification),
 		IsEnabled:                knownBoolPointer(plan.Enabled),
@@ -263,9 +258,12 @@ func (aliasResource *aliasResource) Create(ctx context.Context, req resource.Cre
 		MaxQuota:                 knownStringPointer(plan.MaxQuota),
 		Retention:                knownInt64Pointer(plan.Retention),
 		SMTPLimit:                knownInt64Pointer(plan.SMTPLimit),
-		Recipients:               &recipients,
-		Labels:                   &labels,
+		Recipients:               knownStringListPointer(ctx, plan.Recipients, &resp.Diagnostics),
+		Labels:                   knownStringListPointer(ctx, plan.Labels, &resp.Diagnostics),
 		Description:              knownStringPointer(plan.Description),
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	alias, err := aliasResource.client.CreateAlias(ctx, plan.Domain.ValueString(), plan.Name.ValueString(), params)
