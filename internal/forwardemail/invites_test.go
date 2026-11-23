@@ -89,3 +89,35 @@ func TestClient_CreateDomainInvite(t *testing.T) {
 		})
 	}
 }
+
+func TestClient_CreateDomainInviteTrimsBeforeSending(t *testing.T) {
+	var gotPath, gotEmail, gotGroup string
+	var formErr error
+
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		formErr = r.ParseForm()
+		gotEmail = r.PostForm.Get("email")
+		gotGroup = r.PostForm.Get("group")
+		fmt.Fprint(w, `{"email":"tony@stark.com","group":"admin"}`)
+	}))
+	defer svr.Close()
+
+	c := newTestClient(t, WithAPIURL(svr.URL))
+
+	if _, err := c.CreateDomainInvite(context.Background(), "  stark.com  ", "  tony@stark.com  ", "  admin  "); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if formErr != nil {
+		t.Errorf("failed to parse form: %v", formErr)
+	}
+	if want := "/v1/domains/stark.com/invites"; gotPath != want {
+		t.Errorf("path = %q, want %q", gotPath, want)
+	}
+	if want := "tony@stark.com"; gotEmail != want {
+		t.Errorf("email sent to API = %q, want %q", gotEmail, want)
+	}
+	if want := "admin"; gotGroup != want {
+		t.Errorf("group sent to API = %q, want %q", gotGroup, want)
+	}
+}

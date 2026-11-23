@@ -497,3 +497,41 @@ func TestClient_CreateDomainTrimsNameBeforeSending(t *testing.T) {
 func pointBool(b bool) *bool {
 	return &b
 }
+
+func TestClient_GetDomainTrimsNameBeforeSending(t *testing.T) {
+	var gotPath string
+
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		fmt.Fprint(w, `{"name": "stark.com", "object": "domain"}`)
+	}))
+	defer svr.Close()
+
+	c := newTestClient(t, WithAPIURL(svr.URL))
+
+	if _, err := c.GetDomain(context.Background(), "  stark.com  "); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if want := "/v1/domains/stark.com"; gotPath != want {
+		t.Errorf("path = %q, want %q", gotPath, want)
+	}
+}
+
+func TestClient_DeleteDomainTrimsNameBeforeSending(t *testing.T) {
+	var gotPath string
+
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer svr.Close()
+
+	c := newTestClient(t, WithAPIURL(svr.URL))
+
+	if err := c.DeleteDomain(context.Background(), "  stark.com  "); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if want := "/v1/domains/stark.com"; gotPath != want {
+		t.Errorf("path = %q, want %q", gotPath, want)
+	}
+}

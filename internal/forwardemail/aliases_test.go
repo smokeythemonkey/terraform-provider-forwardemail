@@ -755,3 +755,78 @@ func TestClient_UpdateAliasSendsOnlyProvidedParameters(t *testing.T) {
 func pointInt64(v int64) *int64 {
 	return &v
 }
+
+func TestClient_DeleteAliasTrimsBeforeSending(t *testing.T) {
+	var gotPath string
+
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer svr.Close()
+
+	c := newTestClient(t, WithAPIURL(svr.URL))
+
+	if err := c.DeleteAlias(context.Background(), "  stark.com  ", "  tony  "); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if want := "/v1/domains/stark.com/aliases/tony"; gotPath != want {
+		t.Errorf("path = %q, want %q", gotPath, want)
+	}
+}
+
+// Like the string parameters, slice parameters are pointers so an
+// explicitly empty list (clearing the field) is distinguishable from
+// unset (field omitted from the form body). An empty non-nil list must
+// be sent as a single empty key value; dropping the key entirely makes
+// a clear silently indistinguishable from an untouched list.
+func TestEncodeAliasParamsSliceDistinguishesUnsetFromClear(t *testing.T) {
+	unset := url.Values{}
+	encodeAliasParams(unset, AliasParameters{})
+	for _, key := range []string{"recipients[]", "labels[]"} {
+		if unset.Has(key) {
+			t.Errorf("unset %q must be omitted, got %v", key, unset)
+		}
+	}
+
+	cleared := url.Values{}
+	encodeAliasParams(cleared, AliasParameters{
+		Recipients: pointSliceOfStrings([]string{}),
+		Labels:     pointSliceOfStrings([]string{}),
+	})
+	for _, key := range []string{"recipients[]", "labels[]"} {
+		if !cleared.Has(key) {
+			t.Errorf("explicit empty %q must be sent (to clear it), got %v", key, cleared)
+		}
+	}
+}
+
+// Clearing an alias's recipients must reach the API as an explicitly
+// present recipients[] key: the API keeps the existing recipients when
+// the key is absent from the body (see the recipientsProvidedInBody
+// branch in its validate-alias controller), so omitting it silently
+// no-ops the clear.
+func TestClient_UpdateAliasCanClearRecipients(t *testing.T) {
+	var gotForm url.Values
+	var formErr error
+
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		formErr = r.ParseForm()
+		gotForm = r.PostForm
+		fmt.Fprint(w, `{"name":"tony","domain":{"name":"stark.com"}}`)
+	}))
+	defer svr.Close()
+
+	c := newTestClient(t, WithAPIURL(svr.URL))
+
+	params := AliasParameters{Recipients: pointSliceOfStrings([]string{})}
+	if _, err := c.UpdateAlias(context.Background(), "stark.com", "tony", params); err != nil {
+		t.Fatalf("UpdateAlias: %v", err)
+	}
+	if formErr != nil {
+		t.Errorf("ParseForm: %v", formErr)
+	}
+	if !gotForm.Has("recipients[]") {
+		t.Errorf("form must contain recipients[] to clear the list, got %v", gotForm)
+	}
+}
