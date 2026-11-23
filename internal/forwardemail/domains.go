@@ -74,7 +74,8 @@ func (c *Client) GetDomain(ctx context.Context, name string) (*Domain, error) {
 	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(name) == "" {
+	name = strings.TrimSpace(name)
+	if name == "" {
 		return nil, ErrEmptyDomainName
 	}
 
@@ -103,11 +104,11 @@ func (c *Client) CreateDomain(ctx context.Context, name string, parameters Domai
 	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(name) == "" {
-		return nil, ErrEmptyDomainName
-	}
 
 	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil, ErrEmptyDomainName
+	}
 
 	params := url.Values{}
 	params.Add("domain", name)
@@ -139,11 +140,12 @@ func (c *Client) UpdateDomain(ctx context.Context, name string, parameters Domai
 	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(name) == "" {
+
+	name = strings.TrimSpace(name)
+	if name == "" {
 		return nil, ErrEmptyDomainName
 	}
 
-	name = strings.TrimSpace(name)
 	encodedName := url.PathEscape(name)
 
 	params := url.Values{}
@@ -176,7 +178,9 @@ func (c *Client) DeleteDomain(ctx context.Context, name string) error {
 	if err := validateContext(ctx); err != nil {
 		return err
 	}
-	if strings.TrimSpace(name) == "" {
+
+	name = strings.TrimSpace(name)
+	if name == "" {
 		return ErrEmptyDomainName
 	}
 

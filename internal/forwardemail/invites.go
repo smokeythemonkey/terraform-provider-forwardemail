@@ -27,13 +27,16 @@ func (c *Client) CreateDomainInvite(ctx context.Context, domain, email, group st
 	if err := validateContext(ctx); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(domain) == "" {
+	domain = strings.TrimSpace(domain)
+	if domain == "" {
 		return nil, ErrEmptyDomain
 	}
-	if strings.TrimSpace(email) == "" {
+	email = strings.TrimSpace(email)
+	if email == "" {
 		return nil, ErrEmptyEmail
 	}
-	if strings.TrimSpace(group) == "" {
+	group = strings.TrimSpace(group)
+	if group == "" {
 		return nil, ErrEmptyGroup
 	}
 

@@ -311,10 +311,12 @@ func (c *Client) DeleteAlias(ctx context.Context, domain, alias string) error {
 	if err := validateContext(ctx); err != nil {
 		return err
 	}
-	if strings.TrimSpace(domain) == "" {
+	domain = strings.TrimSpace(domain)
+	if domain == "" {
 		return ErrEmptyDomain
 	}
-	if strings.TrimSpace(alias) == "" {
+	alias = strings.TrimSpace(alias)
+	if alias == "" {
 		return ErrEmptyAlias
 	}
 
