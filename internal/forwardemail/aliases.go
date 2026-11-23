@@ -29,7 +29,6 @@ func (f *flexString) UnmarshalJSON(data []byte) error {
 	return fmt.Errorf("%w: %s", ErrUnsupportedJSONValue, data)
 }
 
-// Alias represents an email alias configuration including recipients, labels, and verification settings.
 type Alias struct {
 	Account                  Account    `json:"user"`
 	Domain                   Domain     `json:"domain"`
@@ -94,7 +93,6 @@ func (a *Alias) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// AliasParameters contains optional parameters for creating or updating an alias.
 type AliasParameters struct {
 	Recipients               *[]string
 	Labels                   *[]string
@@ -113,7 +111,6 @@ type AliasParameters struct {
 	SMTPLimit                *int64
 }
 
-// GetAliases retrieves all email aliases for the specified domain.
 func (c *Client) GetAliases(ctx context.Context, domain string) ([]Alias, error) {
 	if err := validateContext(ctx); err != nil {
 		return nil, err
@@ -143,7 +140,6 @@ func (c *Client) GetAliases(ctx context.Context, domain string) ([]Alias, error)
 	return items, nil
 }
 
-// GetAlias retrieves a specific email alias by name for the specified domain.
 func (c *Client) GetAlias(ctx context.Context, domain, alias string) (*Alias, error) {
 	if err := validateContext(ctx); err != nil {
 		return nil, err
@@ -178,7 +174,6 @@ func (c *Client) GetAlias(ctx context.Context, domain, alias string) (*Alias, er
 	return &item, nil
 }
 
-// CreateAlias creates a new email alias for the specified domain with the given parameters.
 func (c *Client) CreateAlias(ctx context.Context, domain, alias string, parameters AliasParameters) (*Alias, error) {
 	if err := validateContext(ctx); err != nil {
 		return nil, err
@@ -218,7 +213,6 @@ func (c *Client) CreateAlias(ctx context.Context, domain, alias string, paramete
 	return &item, nil
 }
 
-// UpdateAlias updates an existing email alias with new parameters for the specified domain.
 func (c *Client) UpdateAlias(ctx context.Context, domain, alias string, parameters AliasParameters) (*Alias, error) {
 	if err := validateContext(ctx); err != nil {
 		return nil, err
@@ -298,15 +292,19 @@ func encodeAliasParams(params url.Values, parameters AliasParameters) {
 		"recipients[]": parameters.Recipients,
 		"labels[]":     parameters.Labels,
 	} {
-		if v != nil {
-			for _, vv := range *v {
-				params.Add(k, vv)
-			}
+		if v == nil {
+			continue
+		}
+		if len(*v) == 0 {
+			params.Add(k, "")
+			continue
+		}
+		for _, vv := range *v {
+			params.Add(k, vv)
 		}
 	}
 }
 
-// DeleteAlias removes an email alias from the specified domain.
 func (c *Client) DeleteAlias(ctx context.Context, domain, alias string) error {
 	if err := validateContext(ctx); err != nil {
 		return err
